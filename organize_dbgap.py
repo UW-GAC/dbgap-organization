@@ -8,10 +8,10 @@ root_directory = "/projects/topmed/downloaded_data/dbGaP/test/phs000284/"
 os.chdir(os.path.join(root_directory, "organized"))
 
 # regular expression matchers for various kinds of dbgap files
-dbgap_re_dict = {'data_dict': r'^phs(?P<dbgap_id>\d{6}\.v\d+?\.pht\d{6}\.v\d+?)\.(?P<base>.+?)\.data_dict(?P<extra>\w+?)\.xml$',
-           'phenotype': r'^phs(?P<dbgap_id>\d{6}\.v\d+?\.pht\d{6}\.v\d+?)\.p(\d+?)\.c(\d+?)\.(.+?)\.(.+?)\.txt$',
-           'var_report': r'^phs(?P<dbgap_id>\d{6}\.v\d+?\.pht\d{6}\.v\d+?)\.(.+?)\.var_report(\w+?)\.xml$',
-           'special': r'^phs(?P<dbgap_id>\d{6}\.v\d+?\.pht\d{6}\.v\d+?)\.p(\d+?)\.(.+?)\.MULTI.txt$'
+dbgap_re_dict = {'data_dict': r'^(?P<dbgap_id>phs\d{6}\.v\d+?\.pht\d{6}\.v\d+?)\.(?P<base>.+?)\.data_dict(?P<extra>\w+?)\.xml$',
+           'phenotype': r'^(?P<dbgap_id>phs\d{6}\.v\d+?\.pht\d{6}\.v\d+?)\.p(\d+?)\.c(\d+?)\.(.+?)\.(.+?)\.txt$',
+           'var_report': r'^(?P<dbgap_id>phs\d{6}\.v\d+?\.pht\d{6}\.v\d+?)\.(.+?)\.var_report(\w+?)\.xml$',
+           'special': r'^(?P<dbgap_id>phs\d{6}\.v\d+?\.pht\d{6}\.v\d+?)\.p(\d+?)\.(.+?)\.MULTI.txt$'
            }
 
 def sort_file(basename, re_dict=dbgap_re_dict):
