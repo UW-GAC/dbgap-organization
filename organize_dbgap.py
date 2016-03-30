@@ -3,9 +3,10 @@
 import os
 import sys
 import re # regular expressions
+from argparse import ArgumentParser
 
-root_directory = "/projects/topmed/downloaded_data/dbGaP/test/phs000284/"
-os.chdir(os.path.join(root_directory, "organized"))
+#root_directory = "/projects/topmed/dataprep/studyspecific/phase1/ramachandran_fhs/dbgap/"
+#os.chdir(os.path.join(root_directory, "organized"))
 
 # regular expression matchers for various kinds of dbgap files
 dbgap_re_dict = {'data_dict': r'^(?P<dbgap_id>phs\d{6}\.v\d+?\.pht\d{6}\.v\d+?)\.(?P<base>.+?)\.data_dict(?P<extra>\w+?)\.xml$',
@@ -22,18 +23,26 @@ def sort_file(basename, re_dict=dbgap_re_dict):
     
     return None
     
-def main():
+def main(directory):
     
     patterns_to_link = (".xml", ".txt")
     
-    for root, dirs, files in os.walk(root_directory):
+    for root, dirs, files in os.walk(directory):
         for name in files:
             # os.symlink!
             # os.relpath!
             file_type = sort_file(name)
             print(file_type, name)
+            
+            
 if __name__ == '__main__':
-    main()
+    parser = ArgumentParser()
+    
+    parser.add_argument("directory")
+    
+    args = parser.parse_args()
+    
+    main(args.directory)
 
 
 """    
