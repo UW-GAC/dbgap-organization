@@ -15,7 +15,7 @@ dbgap_re_dict = {'data_dict': r'^(?P<dbgap_id>phs\d{6}\.v\d+?\.pht\d{6}\.v\d+?)\
            'special': r'^(?P<dbgap_id>phs\d{6}\.v\d+?\.pht\d{6}\.v\d+?)\.p(\d+?)\.(.+?)\.MULTI.txt$'
            }
 
-def sort_file(basename, re_dict=dbgap_re_dict):
+def get_file_type(basename, re_dict=dbgap_re_dict):
     for key, value in re_dict.items():
         match = re.match(value, basename)
         if match:
@@ -23,18 +23,27 @@ def sort_file(basename, re_dict=dbgap_re_dict):
     
     return None
     
-def main(directory):
+def get_file_type_dict(directory):
     
-    patterns_to_link = (".xml", ".txt")
-    
+    file_dict = {}
     for root, dirs, files in os.walk(directory):
         for name in files:
             # os.symlink!
             # os.relpath!
-            file_type = sort_file(name)
-            print(file_type, name)
+            file_type = get_file_type(name)
             
+            full_path = os.path.join(root, name)
+            relative_path = os.path.relpath(full_path)
+            file_dict[relative_path] = file_type
             
+    return file_dict
+
+def check_directory_structure():
+    """This function will check structure of linked directories:
+    ie all var_reports and data_dictionaries exist for a given phenotype file:"""
+    pass
+
+
 if __name__ == '__main__':
     parser = ArgumentParser()
     
@@ -42,7 +51,9 @@ if __name__ == '__main__':
     
     args = parser.parse_args()
     
-    main(args.directory)
+    file_types = get_file_type_dict(args.directory)
+    for key, value in file_types.items():
+        print(value, "\t", key)
 
 
 """    
