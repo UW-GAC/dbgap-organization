@@ -22,21 +22,30 @@ dbgap_re_dict = {'data_dict': r'^(?P<dbgap_id>phs\d{6}\.v\d+?\.pht\d{6}\.v\d+?)\
 # we only need to link 1 var_report and 1 data_dict for each phenotype dataset.
 
 class DbgapFile(object):
-    
+    """Class to hold information about files downloaded from dbgap.
+    """
     def __init__(self, file_path):
+        """Constructor function for DbgapFile instances.
         
+        Arguments:
+        
+        file_path: full path to a file downloaded from dbgap
+        """
         self.full_path = file_path
         self.basename = os.path.basename(file_path)
         
-        self.file_type = None
-        self.match = None
-        self.symlinked = None
+        # these will be set in sorting
+        self.file_type = None # possibilities are 'phenotype', 'var_report', 'data_dict'
+        self.match = None # will store the regular expression re.match object
     
     def __str__(self):
+        """string method for DbgapFile objects"""
         return self.full_path
     
     
     def set_file_type(self, re_dict=dbgap_re_dict):
+        """Function to set the file_type of a DbgapFile object, based on regular expression patterns"""
+        
         for key, value in re_dict.items():
             match = re.match(value, self.basename)
             if match is not None:
@@ -45,7 +54,9 @@ class DbgapFile(object):
 
     
 def get_file_list(directory):
-    
+    """Returns a list of DbgapFile objects, one for each file in the downloaded directory tree.
+    The DbgapFile objects will already have been classified with their file_type attribute set.
+    """
     file_list = []
     for root, dirs, files in os.walk(directory):
         for name in files:
@@ -59,14 +70,10 @@ def get_file_list(directory):
     return file_list
     
 
-def check_directory_structure():
-    """This function will check structure of linked directories:
-    ie all var_reports and data_dictionaries exist for a given phenotype file:"""
-    pass
-
-
 def _check_diffs(dbgap_file_subset):
+    """Run a unix diff on a set of files to make sure that they are all the same.
     
+    If they are not the same, a ValueError is raised."""
     filename_a = dbgap_file_subset[0].full_path
     
     for i in range(1, len(dbgap_file_subset)):
@@ -79,6 +86,24 @@ def _check_diffs(dbgap_file_subset):
 
    
 def _get_var_report_match(dbgap_files, dbgap_file_to_match, check_diffs=True):
+    """For a given DbgapFile, find the matcing var_report DbgapFile.
+    
+    Arguments:
+    
+    dbgap_files: list of DbgapFile objects returned from get_file_list
+    dbgap_file_to_match: single DbgapFile object for which to find the matching var_report file
+    
+    Optional arguments:
+    check_diffs: if True, check that all matching var_report files are the same.
+    
+    Files are matched based on file_type (to identify var_reports) and the
+    dgap_id capture group from the regular expressions used to classify files.
+    dbgap_id is the prefix of each file (ie phs??????.v?.pht??????.v?).
+    
+    Returns:
+    
+    the DbgapFile var_report object that has the same dbgap_id as the dbgap_file_to_match.
+    """
     dbgap_id_to_match = dbgap_file_to_match.match.groupdict()['dbgap_id']
 
     matches = []
@@ -97,6 +122,24 @@ def _get_var_report_match(dbgap_files, dbgap_file_to_match, check_diffs=True):
 
 
 def _get_data_dict_match(dbgap_files, dbgap_file_to_match, check_diffs=True):
+    """For a given DbgapFile, find the matcing data_dict DbgapFile.
+    
+    Arguments:
+    
+    dbgap_files: list of DbgapFile objects returned from get_file_list
+    dbgap_file_to_match: single DbgapFile object for which to find the matching var_report file
+    
+    Optional arguments:
+    check_diffs: if True, check that all matching data_dict files are the same.
+    
+    Files are matched based on file_type (to identify data_dict) and the
+    dgap_id capture group from the regular expressions used to classify files.
+    dbgap_id is the prefix of each file (ie phs??????.v?.pht??????.v?).
+    
+    Returns:
+    
+    the DbgapFile var_report object that has the same dbgap_id as the dbgap_file_to_match.
+    """
     dbgap_id_to_match = dbgap_file_to_match.match.groupdict()['dbgap_id']
 
     matches = []
@@ -114,6 +157,26 @@ def _get_data_dict_match(dbgap_files, dbgap_file_to_match, check_diffs=True):
 
 
 def _get_special_file_set(dbgap_files, pattern='Subject'):
+    """Returns the file_set for "special" files: ie, the Subject, Sample, and Pedigree files
+    
+    Arguments:
+    
+    dbgap_files: list of DbgapFile objects returned from get_file_list
+    
+    Optional arguments:
+    
+    pattern: the pattern in the file name to identify which file to find (ie, 'Subject' to find the subject files)
+    
+    Returns:
+    file_set: a dictionary with keys
+                'data_files' (list DbgapFiles of length 1, since all special files are the same across consent groups)
+                'var_report' (one corresponding var_report DbgapFile for this file)
+                'data_dict' (one corresponding data_dict DbgapFile for this file)
+
+    Since all var_report and data_dict files are the same for a given set of phenotype files
+    across consent groups, this function only returns one data_dict and one var_report for
+    each phenotype file set.
+    """
     special_files = [f for f in dbgap_files if f.file_type == 'special' and pattern in f.basename]
     
     # make sure they are all the same
@@ -130,6 +193,23 @@ def _get_special_file_set(dbgap_files, pattern='Subject'):
 
 
 def _get_phenotype_file_sets(dbgap_files):
+    """Returns the file_set for phenotype files: ie, .txt files that are not Subject, Sample, and Pedigree files
+    
+    Arguments:
+    
+    dbgap_files: list of DbgapFile objects returned from get_file_list
+        
+    Returns:
+    file_set: a dictionary with keys
+                'data_files' (list DbgapFiles of length n, where n is the number of consent groups)
+                'var_report' (one corresponding var_report DbgapFile for this file)
+                'data_dict' (one corresponding data_dict DbgapFile for this file)
+                
+    Since all var_report and data_dict files are the same for a given set of phenotype files
+    across consent groups, this function only returns one data_dict and one var_report for
+    each phenotype file set.
+    
+    """
     
     phenotype_files = [f for f in dbgap_files if f.file_type == 'phenotype']
     # get the set of unique dbgap_ids
@@ -152,10 +232,26 @@ def _get_phenotype_file_sets(dbgap_files):
     
     
 def _make_symlink(dbgap_file):
+    """Make (relative path) symlinks to a DbgapFile object's path in the current directory.
+    
+    Arguments:
+    
+    dbgap_file: a DbgapFile object whose path will be used to make a symlink
+    """
     os.symlink(os.path.relpath(dbgap_file.full_path), dbgap_file.basename)
 
 def _make_symlink_set(file_set):
+    """Make symlinks for a set of DbgapFile objects, ie, all the data_files and their
+    corresponding data_dict file and var_report file.
     
+    Arguments:
+    
+    file_set: a dictionary with keys 'data_files', 'var_report', and 'data_dict'
+              either the dictionary returned by _get_special_file_set or one
+              element of the list returned by _getphenotype_file_sets or
+              
+    One symlink for each of the 'data_files' is made, plus one for the var_report and data_dict files
+    """
     # link the actual data
     for f in file_set['data_files']:
         _make_symlink(f)
@@ -166,7 +262,8 @@ def _make_symlink_set(file_set):
 
 
 def _make_symlinks(subject_file_set, pedigree_file_set, sample_file_set, phenotype_file_sets, nfiles=None):
-    
+    """Function to generate symlinks for a set of dbgap files.
+    """
     if not os.path.exists("organized"):
         os.makedirs("organized")
     os.chdir("organized")
@@ -195,6 +292,12 @@ def _make_symlinks(subject_file_set, pedigree_file_set, sample_file_set, phenoty
     os.chdir("..")
 
 if __name__ == '__main__':
+    """Main function:
+    - parse command line arguments
+    - get DbgapFile list
+    - find the file sets to symlink
+    - create symlinks (if requested)
+    """
     parser = ArgumentParser()
     
     parser.add_argument("directory")
@@ -217,16 +320,3 @@ if __name__ == '__main__':
     if args.link:
         _make_symlinks(subject_file_set, pedigree_file_set, sample_file_set, phenotype_file_sets, nfiles=args.nfiles)
     
-    
-    
-"""    
-Subjects
-    Subject data dictionary
-    Subject "phenotypes"
-    subject var_report
-Phenotypes
-    for each "combined dataset", there will be:
-        1 text file per consent group
-        1 data dictionary - assume same or check
-        1 var report?
-"""
