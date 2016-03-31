@@ -78,7 +78,7 @@ def _check_diffs(dbgap_file_subset):
 
 
    
-def _get_var_report_match(dbgap_files, dbgap_file_to_match):
+def _get_var_report_match(dbgap_files, dbgap_file_to_match, check_diffs=True):
     dbgap_id_to_match = dbgap_file_to_match.match.groupdict()['dbgap_id']
 
     matches = []
@@ -88,13 +88,15 @@ def _get_var_report_match(dbgap_files, dbgap_file_to_match):
                 matches.append(f)
 
     # need to diff the files here to make sure they are the same
-    
+    if check_diffs:
+        _check_diffs(matches)
+        
     # return the first
     return matches[0]
 
 
 
-def _get_data_dict_match(dbgap_files, dbgap_file_to_match):
+def _get_data_dict_match(dbgap_files, dbgap_file_to_match, check_diffs=True):
     dbgap_id_to_match = dbgap_file_to_match.match.groupdict()['dbgap_id']
 
     matches = []
@@ -104,6 +106,8 @@ def _get_data_dict_match(dbgap_files, dbgap_file_to_match):
                 matches.append(f)
 
     # need to diff the files here to make sure they are the same
+    if check_diffs:
+        _check_diffs(matches)
     
     # return the first
     return matches[0]
