@@ -4,7 +4,7 @@ import os
 import sys
 import re # regular expressions
 from argparse import ArgumentParser
-
+import subprocess # for system commands - in this case, only diff
 from pprint import pprint
 
 #root_directory = "/projects/topmed/dataprep/studyspecific/phase1/ramachandran_fhs/dbgap/"
@@ -78,6 +78,18 @@ def _get_var_report_match(dbgap_files, dbgap_file_to_match):
     
     # return the first
     return matches[0]
+
+
+def _check_diffs(dbgap_file_subset):
+    
+    filename_a = dbgap_file_subset[0].full_path
+    
+    for i in range(1, len(dbgap_file_subset)):
+        filename_b = dbgap_file_subset[i].full_path
+        cmd = 'diff {file1} {file2}'.format(file1=filename_a, file2=filename_b)
+        out = subprocess.check_output(cmd, shell=True)
+        if len(out) > 0:
+            raise ValueError('files are expect to be the same but are different: {file_a}, {file_b}'.format(file_a=filename_a, file_b=filename_b))
 
 
 def _get_data_dict_match(dbgap_files, dbgap_file_to_match):
