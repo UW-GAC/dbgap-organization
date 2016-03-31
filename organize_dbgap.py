@@ -33,7 +33,7 @@ class DbgapFile(object):
         self.symlinked = None
     
     def __str__(self):
-        return self.full_name
+        return self.full_path
     
     
     def set_file_type(self, re_dict=dbgap_re_dict):
