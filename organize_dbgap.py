@@ -32,7 +32,7 @@ class DbgapFile(object):
         self.full_path = file_path
         self.basename = os.path.basename(file_path)
         
-        # these will be set in sorting
+        # these will be set in the set_file_type class method
         self.file_type = None # possibilities are 'phenotype', 'var_report', 'data_dict'
         self.match = None # will store the regular expression re.match object
 
@@ -291,16 +291,20 @@ def _make_symlinks(subject_file_set, pedigree_file_set, sample_file_set, phenoty
 
 if __name__ == '__main__':
     """Main function:
-    - parse command line arguments
-    - get DbgapFile list
-    - find the file sets to symlink
-    - create symlinks (if requested)
+    - decrypt dbgap files in download directory
+    - uncompress files (probably needs to be a recursive function)
+    * parse command line arguments
+    * get DbgapFile list
+    * find the file sets to symlink
+    * create symlinks (if requested)
+    
+    Tasks bulleted with * are already being done; those bulleted with - still need to be written.
     """
     parser = ArgumentParser()
     
     parser.add_argument("directory")
     parser.add_argument("--link", "-l", default=False, action="store_true",
-                        help="create symlinks for the dbgap files")
+                        help="create symlinks for the dbgap files?")
     parser.add_argument("--nfiles", "-n", dest="nfiles", type=int, default=None,
                         help="number of phenotype files to link (for testing purposes)")
     
@@ -312,9 +316,11 @@ if __name__ == '__main__':
     subject_file_set = _get_special_file_set(dbgap_files, pattern="Subject")
     pedigree_file_set = _get_special_file_set(dbgap_files, pattern="Pedigree")
     sample_file_set = _get_special_file_set(dbgap_files, pattern="Sample")
-        
+    
+    # find the phenotype file sets
     phenotype_file_sets = _get_phenotype_file_sets(dbgap_files)
 
+    # if requested, generate the symlinks in the 'organized' subdirectory
     if args.link:
         _make_symlinks(subject_file_set, pedigree_file_set, sample_file_set, phenotype_file_sets, nfiles=args.nfiles)
     
