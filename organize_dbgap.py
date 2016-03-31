@@ -188,7 +188,9 @@ def _make_symlinks(subject_file_set, pedigree_file_set, sample_file_set, phenoty
     os.chdir("Phenotypes")
     
     # make phenotype file symlinks
-    
+    for phenotype_file_set in phenotype_file_sets:
+        _make_symlink_set(phenotype_file_set)
+        
     os.chdir("..")
 
 if __name__ == '__main__':
