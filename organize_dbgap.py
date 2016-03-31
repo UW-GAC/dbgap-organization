@@ -19,33 +19,39 @@ dbgap_re_dict = {'data_dict': r'^(?P<dbgap_id>phs\d{6}\.v\d+?\.pht\d{6}\.v\d+?)\
 # the var_reports and data dictionaries pertain to a single participant set number; they are the same across consent groups
 # we only need to link 1 var_report and 1 data_dict for each phenotype dataset.
 
-def get_file_type(basename, re_dict=dbgap_re_dict):
-    for key, value in re_dict.items():
-        match = re.match(value, basename)
-        if match is not None:
-            file_type = key
-            break
+class DbgapFile(object):
+    
+    def __init__(self, file_path):
+        
+        self.full_path = file_path
+        self.basename = os.path.basename(file_path)
+        
+        self.file_type = None
+        self.match = None
+        self.symlinked = None
+    
+    def set_file_type(self, re_dict=dbgap_re_dict):
+        for key, value in re_dict.items():
+            match = re.match(value, self.basename)
+            if match is not None:
+                self.file_type = key
+                self.match = match
 
-    return {'file_type': key,
-            'match': match,
-            'symlinked': False}
     
-def get_file_type_dict(directory):
+def get_file_list(directory):
     
-    file_dict = {}
+    file_list = []
     for root, dirs, files in os.walk(directory):
         for name in files:
-            # os.symlink!
-            # os.relpath!
-            results = get_file_type(name)
-            
-            
             full_path = os.path.join(root, name)
-            relative_path = os.path.relpath(full_path)
-            file_dict[full_path] = results
             
-    return file_dict
-
+            dbgap_file = DbgapFile(full_path)
+            dbgap_file.set_file_type()
+            
+            file_list.append(dbgap_file)
+    
+    return file_list
+    
 
 def check_directory_structure():
     """This function will check structure of linked directories:
@@ -70,18 +76,29 @@ def get_data_dict_match(file_dict, key):
                     return k
 
 
-def make_symlinks(directory):
-    file_dict = get_file_type_dict(directory)
+def _check_file_set_is_unique(files):
+    basename_set = set([f.basename for f in files])
+    if len(basename_set) != 1:
+        raise ValueError(r'files have different basenames: {files}'.format(files=', '.join(basename_set)))
+
+def _get_subject_files(dbgap_files):
+    subject_files = [f for f in dbgap_files if f.file_type == 'special' and 'Subject' in f.basename]
     
-    # loop over special files and link one of each, plus var_report and data_dictionary
-    subject_files = [f for f in file_dict.keys() if file_dict[f]['file_type'] == 'special' and 'Subject' in f]
-    pedigree_files = [f for f in file_dict.keys() if file_dict[f]['file_type'] == 'special' and 'Pedigree' in f]
-    sample_files = [f for f in file_dict.keys() if file_dict[f]['file_type'] == 'special' and 'Sample' in f]
+    # make sure they are unique
+    _check_file_set_is_unique(subject_files)
     
-    print('subject:\t', subject_files[0])
-    print('matching var report:\t', get_var_report_match(file_dict, subject_files[0]))
-    print('matching data dict:\t', get_data_dict_match(file_dict, subject_files[0]))
-    # loop over phenotype files and link all from each consent group, plus one var_report and one data_dictionary
+    # keep only the first
+    return subject_files
+
+def make_symlinks(dbgap_files):
+    
+    # find the subject_files
+    subject_file_set = _get_subject_files(dbgap_files)
+    
+    
+    print("\nSubject:")
+    print([f.basename for f in subject_file_set])
+    
     
 if __name__ == '__main__':
     parser = ArgumentParser()
@@ -90,15 +107,12 @@ if __name__ == '__main__':
     
     args = parser.parse_args()
     
-    make_symlinks(args.directory)
+    dbgap_files = get_file_list(args.directory)
     
-    #file_types = get_file_type_dict(args.directory)
-    #for key, value in file_types.items():
-    #    if value['match'] is not None:
-    #        print(value['file_type'], '\t', value['match'].groupdict(), "\t", key)
-    #    else:
-    #        print('None', '\t', os.path.basename(key))
-
+    make_symlinks(dbgap_files)
+    
+    
+    
 """    
 Subjects
     Subject data dictionary
