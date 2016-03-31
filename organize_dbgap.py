@@ -37,7 +37,8 @@ class DbgapFile(object):
         # these will be set in sorting
         self.file_type = None # possibilities are 'phenotype', 'var_report', 'data_dict'
         self.match = None # will store the regular expression re.match object
-    
+
+
     def __str__(self):
         """string method for DbgapFile objects"""
         return self.full_path
@@ -84,7 +85,6 @@ def _check_diffs(dbgap_file_subset):
             raise ValueError('files are expect to be the same but are different: {file_a}, {file_b}'.format(file_a=filename_a, file_b=filename_b))
 
 
-   
 def _get_var_report_match(dbgap_files, dbgap_file_to_match, check_diffs=True):
     """For a given DbgapFile, find the matcing var_report DbgapFile.
     
@@ -118,7 +118,6 @@ def _get_var_report_match(dbgap_files, dbgap_file_to_match, check_diffs=True):
         
     # return the first
     return matches[0]
-
 
 
 def _get_data_dict_match(dbgap_files, dbgap_file_to_match, check_diffs=True):
@@ -228,7 +227,6 @@ def _get_phenotype_file_sets(dbgap_files):
         phenotype_file_sets.append(this_set)
     
     return phenotype_file_sets
-        
     
     
 def _make_symlink(dbgap_file):
@@ -239,6 +237,7 @@ def _make_symlink(dbgap_file):
     dbgap_file: a DbgapFile object whose path will be used to make a symlink
     """
     os.symlink(os.path.relpath(dbgap_file.full_path), dbgap_file.basename)
+
 
 def _make_symlink_set(file_set):
     """Make symlinks for a set of DbgapFile objects, ie, all the data_files and their
@@ -290,6 +289,7 @@ def _make_symlinks(subject_file_set, pedigree_file_set, sample_file_set, phenoty
         _make_symlink_set(phenotype_file_set)
         
     os.chdir("..")
+
 
 if __name__ == '__main__':
     """Main function:
