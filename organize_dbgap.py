@@ -123,7 +123,7 @@ def _get_special_file_set(dbgap_files, pattern='Subject'):
     data_dict = _get_data_dict_match(dbgap_files, special_files[0])
     
     # return the whole set
-    file_set = {'data_file': special_files[0],
+    file_set = {'data_files': [special_files[0]],
                 'var_report': var_report,
                 'data_dict': data_dict}
     return file_set
@@ -154,14 +154,15 @@ def _get_phenotype_file_sets(dbgap_files):
 def _make_symlink(dbgap_file):
     os.symlink(os.path.relpath(dbgap_file.full_path), dbgap_file.basename)
 
-def _make_special_symlink_set(special_set):
+def _make_symlink_set(file_set):
     
     # link the actual data
-    _make_symlink(special_set['data_file'])
+    for f in file_set['data_files']:
+        _make_symlink(f)
     # link the var_report
-    _make_symlink(special_set['var_report'])
+    _make_symlink(file_set['var_report'])
     # link the data dictionary
-    _make_symlink(special_set['data_dict'])
+    _make_symlink(file_set['data_dict'])
 
 
 def _make_symlinks(subject_file_set, pedigree_file_set, sample_file_set, phenotype_file_sets):
@@ -175,9 +176,9 @@ def _make_symlinks(subject_file_set, pedigree_file_set, sample_file_set, phenoty
         os.makedirs("Subjects")
     os.chdir("Subjects")
 
-    _make_special_symlink_set(subject_file_set)
-    _make_special_symlink_set(sample_file_set)
-    _make_special_symlink_set(pedigree_file_set)
+    _make_symlink_set(subject_file_set)
+    _make_symlink_set(sample_file_set)
+    _make_symlink_set(pedigree_file_set)
     
     os.chdir("..")
 
