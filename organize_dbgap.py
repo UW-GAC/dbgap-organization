@@ -165,7 +165,7 @@ def _make_symlink_set(file_set):
     _make_symlink(file_set['data_dict'])
 
 
-def _make_symlinks(subject_file_set, pedigree_file_set, sample_file_set, phenotype_file_sets):
+def _make_symlinks(subject_file_set, pedigree_file_set, sample_file_set, phenotype_file_sets, nfiles=None):
     
     if not os.path.exists("organized"):
         os.makedirs("organized")
@@ -188,7 +188,8 @@ def _make_symlinks(subject_file_set, pedigree_file_set, sample_file_set, phenoty
     os.chdir("Phenotypes")
     
     # make phenotype file symlinks
-    for phenotype_file_set in phenotype_file_sets:
+    tmp = phenotype_file_sets[:nfiles]
+    for phenotype_file_set in tmp:
         _make_symlink_set(phenotype_file_set)
         
     os.chdir("..")
@@ -199,6 +200,8 @@ if __name__ == '__main__':
     parser.add_argument("directory")
     parser.add_argument("--link", "-l", default=False, action="store_true",
                         help="create symlinks for the dbgap files")
+    parser.add_argument("--nfiles", "-n", dest="nfiles", type=int, default=None,
+                        help="number of phenotype files to link (for testing purposes)")
     
     args = parser.parse_args()
         
@@ -212,7 +215,7 @@ if __name__ == '__main__':
     phenotype_file_sets = _get_phenotype_file_sets(dbgap_files)
 
     if args.link:
-        _make_symlinks(subject_file_set, pedigree_file_set, sample_file_set, phenotype_file_sets)
+        _make_symlinks(subject_file_set, pedigree_file_set, sample_file_set, phenotype_file_sets, nfiles=args.nfiles)
     
     
     
