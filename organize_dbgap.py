@@ -94,17 +94,17 @@ def _get_data_dict_match(dbgap_files, dbgap_file_to_match):
     return matches[0]
 
 
-def _get_subject_files(dbgap_files):
-    subject_files = [f for f in dbgap_files if f.file_type == 'special' and 'Subject' in f.basename]
+def _get_special_file_set(dbgap_files, pattern='Subject'):
+    special_files = [f for f in dbgap_files if f.file_type == 'special' and pattern in f.basename]
     
     # make sure they are all the same
     
     # get the var_report and data_dictionary to go with the subject file
-    var_report = _get_var_report_match(dbgap_files, subject_files[0])
-    data_dict = _get_data_dict_match(dbgap_files, subject_files[0])
+    var_report = _get_var_report_match(dbgap_files, special_files[0])
+    data_dict = _get_data_dict_match(dbgap_files, special_files[0])
     
     # return the whole set
-    file_set = {'file': subject_files[0],
+    file_set = {'file': special_files[0],
                 'var_report': var_report,
                 'data_dict': data_dict}
     return file_set
@@ -113,13 +113,23 @@ def _get_subject_files(dbgap_files):
 def make_symlinks(dbgap_files):
     
     # find the special file sets
-    subject_file_set = _get_subject_files(dbgap_files)
+    subject_file_set = _get_special_file_set(dbgap_files, pattern="Subject")
+    pedigree_file_set = _get_special_file_set(dbgap_files, pattern="Pedigree")
+    sample_file_set = _get_special_file_set(dbgap_files, pattern="Sample")
     
     print("\nSubject:")
     for key, value in subject_file_set.items():
         print(key, '\t', value)
     
+    print("\nPedigree:")
+    for key, value in pedigree_file_set.items():
+        print(key, '\t', value)
+
+    print("\nSample:")
+    for key, value in sample_file_set.items():
+        print(key, '\t', value)
     
+
 if __name__ == '__main__':
     parser = ArgumentParser()
     
