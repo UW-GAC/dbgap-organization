@@ -166,8 +166,27 @@ def _make_special_symlink_set(special_set):
 
 def _make_symlinks(subject_file_set, pedigree_file_set, sample_file_set, phenotype_file_sets):
     
-    pass
+    os.chdir("organized")
 
+    # special files first
+    if not os.path.exists("Subjects"):
+        os.makedirs("Subjects")
+    os.chdir("Subjects")
+
+    _make_special_symlink_set(subject_file_set)
+    _make_special_symlink_set(sample_file_set)
+    _make_special_symlink_set(pedigree_file_set)
+    
+    os.chdir("..")
+
+    # phenotype files
+    if not os.path.exists("Phenotypes"):
+        os.makedirs("Phenotypes")
+    os.chdir("Phenotypes")
+    
+    # make phenotype file symlinks
+    
+    os.chdir("..")
 
 if __name__ == '__main__':
     parser = ArgumentParser()
