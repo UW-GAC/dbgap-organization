@@ -97,17 +97,27 @@ def _get_data_dict_match(dbgap_files, dbgap_file_to_match):
 def _get_subject_files(dbgap_files):
     subject_files = [f for f in dbgap_files if f.file_type == 'special' and 'Subject' in f.basename]
     
-    # keep only the first
-    return subject_files
+    # make sure they are all the same
+    
+    # get the var_report and data_dictionary to go with the subject file
+    var_report = _get_var_report_match(dbgap_files, subject_files[0])
+    data_dict = _get_data_dict_match(dbgap_files, subject_files[0])
+    
+    # return the whole set
+    file_set = {'file': subject_files[0],
+                'var_report': var_report,
+                'data_dict': data_dict}
+    return file_set
+
 
 def make_symlinks(dbgap_files):
     
-    # find the subject_files
+    # find the special file sets
     subject_file_set = _get_subject_files(dbgap_files)
     
-    
     print("\nSubject:")
-    print([f.basename for f in subject_file_set])
+    for key, value in subject_file_set.items():
+        print(key, '\t', value)
     
     
 if __name__ == '__main__':
