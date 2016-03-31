@@ -123,7 +123,7 @@ def _get_special_file_set(dbgap_files, pattern='Subject'):
     data_dict = _get_data_dict_match(dbgap_files, special_files[0])
     
     # return the whole set
-    file_set = {'file': special_files[0],
+    file_set = {'data_file': special_files[0],
                 'var_report': var_report,
                 'data_dict': data_dict}
     return file_set
@@ -141,7 +141,7 @@ def _get_phenotype_file_sets(dbgap_files):
         matching_files = [f for f in phenotype_files if f.match.groupdict()['dbgap_id'] == dbgap_id]
         var_report = _get_var_report_match(dbgap_files, matching_files[0])
         data_dict = _get_data_dict_match(dbgap_files, matching_files[0])
-        this_set = {'files': matching_files,
+        this_set = {'data_files': matching_files,
                     'var_report': var_report,
                     'data_dict': data_dict
                     }
