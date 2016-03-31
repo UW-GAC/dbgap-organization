@@ -166,6 +166,8 @@ def _make_special_symlink_set(special_set):
 
 def _make_symlinks(subject_file_set, pedigree_file_set, sample_file_set, phenotype_file_sets):
     
+    if not os.path.exists("organized"):
+        os.makedirs("organized")
     os.chdir("organized")
 
     # special files first
