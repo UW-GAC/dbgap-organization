@@ -5,6 +5,8 @@ import sys
 import re # regular expressions
 from argparse import ArgumentParser
 
+from pprint import pprint
+
 #root_directory = "/projects/topmed/dataprep/studyspecific/phase1/ramachandran_fhs/dbgap/"
 #os.chdir(os.path.join(root_directory, "organized"))
 
@@ -62,28 +64,39 @@ def check_directory_structure():
     ie all var_reports and data_dictionaries exist for a given phenotype file:"""
     pass
 
-def get_var_report_match(file_dict, key):
-    dbgap_id_to_match = file_dict[key]['match'].groupdict()['dbgap_id']
-    for k in file_dict.keys():
-        if file_dict[k]['file_type'] == 'var_report':
-            if file_dict[k]['match'] is not None:
-                if file_dict[k]['match'].groupdict()['dbgap_id'] == dbgap_id_to_match:
-                    return k
+def _get_var_report_match(dbgap_files, dbgap_file_to_match):
+    dbgap_id_to_match = dbgap_file_to_match.match.groupdict()['dbgap_id']
 
+    matches = []
+    for f in dbgap_files:
+        if f.file_type == 'var_report':
+            if f.match.groupdict()['dbgap_id'] == dbgap_id_to_match:
+                matches.append(f)
 
-def get_data_dict_match(file_dict, key):
-    dbgap_id_to_match = file_dict[key]['match'].groupdict()['dbgap_id']
-    for k in file_dict.keys():
-        if file_dict[k]['file_type'] == 'data_dict':
-            if file_dict[k]['match'] is not None:
-                if file_dict[k]['match'].groupdict()['dbgap_id'] == dbgap_id_to_match:
-                    return k
-
-
+    # need to diff the files here to make sure they are the same
     
+    # return the first
+    return matches[0]
+
+
+def _get_data_dict_match(dbgap_files, dbgap_file_to_match):
+    dbgap_id_to_match = dbgap_file_to_match.match.groupdict()['dbgap_id']
+
+    matches = []
+    for f in dbgap_files:
+        if f.file_type == 'data_dict':
+            if f.match.groupdict()['dbgap_id'] == dbgap_id_to_match:
+                matches.append(f)
+
+    # need to diff the files here to make sure they are the same
+    
+    # return the first
+    return matches[0]
+
+
 def _get_subject_files(dbgap_files):
     subject_files = [f for f in dbgap_files if f.file_type == 'special' and 'Subject' in f.basename]
-        
+    
     # keep only the first
     return subject_files
 
