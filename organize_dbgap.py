@@ -80,17 +80,10 @@ def get_data_dict_match(file_dict, key):
                     return k
 
 
-def _check_file_set_is_unique(files):
-    basename_set = set([f.basename for f in files])
-    if len(basename_set) != 1:
-        raise ValueError(r'files have different basenames: {files}'.format(files=', '.join(basename_set)))
-
+    
 def _get_subject_files(dbgap_files):
     subject_files = [f for f in dbgap_files if f.file_type == 'special' and 'Subject' in f.basename]
-    
-    # make sure they are unique
-    _check_file_set_is_unique(subject_files)
-    
+        
     # keep only the first
     return subject_files
 
