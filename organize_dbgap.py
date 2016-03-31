@@ -64,6 +64,7 @@ def check_directory_structure():
     ie all var_reports and data_dictionaries exist for a given phenotype file:"""
     pass
 
+   
 def _get_var_report_match(dbgap_files, dbgap_file_to_match):
     dbgap_id_to_match = dbgap_file_to_match.match.groupdict()['dbgap_id']
 
@@ -110,6 +111,27 @@ def _get_special_file_set(dbgap_files, pattern='Subject'):
     return file_set
 
 
+def _get_phenotype_file_sets(dbgap_files):
+    
+    phenotype_files = [f for f in dbgap_files if f.file_type == 'phenotype']
+    # get the set of unique dbgap_ids
+    dbgap_ids = set([f.match.groupdict()['dbgap_id'] for f in phenotype_files])
+    
+    phenotype_file_sets = []
+    for dbgap_id in dbgap_ids:
+        
+        matching_files = [f for f in phenotype_files if f.match.groupdict()['dbgap_id'] == dbgap_id]
+        var_report = _get_var_report_match(dbgap_files, matching_files[0])
+        data_dict = _get_data_dict_match(dbgap_files, matching_files[0])
+        this_set = {'files': matching_files,
+                    'var_report': var_report,
+                    'data_dict': data_dict
+                    }
+        phenotype_file_sets.append(this_set)
+    
+    return phenotype_file_sets
+        
+    
 def make_symlinks(dbgap_files):
     
     # find the special file sets
@@ -129,6 +151,9 @@ def make_symlinks(dbgap_files):
     for key, value in sample_file_set.items():
         print(key, '\t', value)
     
+    phenotype_file_sets = _get_phenotype_file_sets(dbgap_files)
+    print('\nPhenotypes: {n} file sets'.format(n=len(phenotype_file_sets)))
+
 
 if __name__ == '__main__':
     parser = ArgumentParser()
@@ -136,7 +161,7 @@ if __name__ == '__main__':
     parser.add_argument("directory")
     
     args = parser.parse_args()
-    
+        
     dbgap_files = get_file_list(args.directory)
     
     make_symlinks(dbgap_files)
