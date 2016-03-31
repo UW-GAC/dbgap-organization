@@ -7,8 +7,6 @@ from argparse import ArgumentParser
 import subprocess # for system commands - in this case, only diff
 from pprint import pprint
 
-#root_directory = "/projects/topmed/dataprep/studyspecific/phase1/ramachandran_fhs/dbgap/"
-#os.chdir(os.path.join(root_directory, "organized"))
 
 # regular expression matchers for various kinds of dbgap files
 dbgap_re_dict = {'data_dict': r'^(?P<dbgap_id>phs\d{6}\.v\d+?\.pht\d{6}\.v\d+?)\.(?P<base>.+?)\.data_dict(?P<extra>\w{0,}?)\.xml$',
