@@ -150,27 +150,23 @@ def _get_phenotype_file_sets(dbgap_files):
     return phenotype_file_sets
         
     
-def make_symlinks(dbgap_files):
     
-    # find the special file sets
-    subject_file_set = _get_special_file_set(dbgap_files, pattern="Subject")
-    pedigree_file_set = _get_special_file_set(dbgap_files, pattern="Pedigree")
-    sample_file_set = _get_special_file_set(dbgap_files, pattern="Sample")
-    
-    print("\nSubject:")
-    for key, value in subject_file_set.items():
-        print(key, '\t', value)
-    
-    print("\nPedigree:")
-    for key, value in pedigree_file_set.items():
-        print(key, '\t', value)
+def _make_symlink(dbgap_file):
+    os.symlink(os.path.relpath(dbgap_file.full_path), dbgap_file.basename)
 
-    print("\nSample:")
-    for key, value in sample_file_set.items():
-        print(key, '\t', value)
+def _make_special_symlink_set(special_set):
     
-    phenotype_file_sets = _get_phenotype_file_sets(dbgap_files)
-    print('\nPhenotypes: {n} file sets'.format(n=len(phenotype_file_sets)))
+    # link the actual data
+    _make_symlink(special_set['data_file'])
+    # link the var_report
+    _make_symlink(special_set['var_report'])
+    # link the data dictionary
+    _make_symlink(special_set['data_dict'])
+
+
+def _make_symlinks(subject_file_set, pedigree_file_set, sample_file_set, phenotype_file_sets):
+    
+    pass
 
 
 if __name__ == '__main__':
@@ -182,7 +178,14 @@ if __name__ == '__main__':
         
     dbgap_files = get_file_list(args.directory)
     
-    make_symlinks(dbgap_files)
+    # find the special file sets
+    subject_file_set = _get_special_file_set(dbgap_files, pattern="Subject")
+    pedigree_file_set = _get_special_file_set(dbgap_files, pattern="Pedigree")
+    sample_file_set = _get_special_file_set(dbgap_files, pattern="Sample")
+        
+    phenotype_file_sets = _get_phenotype_file_sets(dbgap_files)
+
+    _make_symlinks(subject_file_set, pedigree_file_set, sample_file_set, phenotype_file_sets)
     
     
     
