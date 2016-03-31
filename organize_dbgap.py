@@ -197,6 +197,8 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     
     parser.add_argument("directory")
+    parser.add_argument("--link", "-l", default=False, action="store_true",
+                        help="create symlinks for the dbgap files")
     
     args = parser.parse_args()
         
@@ -209,7 +211,8 @@ if __name__ == '__main__':
         
     phenotype_file_sets = _get_phenotype_file_sets(dbgap_files)
 
-    _make_symlinks(subject_file_set, pedigree_file_set, sample_file_set, phenotype_file_sets)
+    if args.link:
+        _make_symlinks(subject_file_set, pedigree_file_set, sample_file_set, phenotype_file_sets)
     
     
     
