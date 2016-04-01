@@ -292,6 +292,7 @@ def _make_symlinks(subject_file_set, pedigree_file_set, sample_file_set, phenoty
 if __name__ == '__main__':
     """Main function:
     - decrypt dbgap files in download directory
+    - move (copy?) files to their final location
     - uncompress files (probably needs to be a recursive function)
     * parse command line arguments
     * get DbgapFile list
