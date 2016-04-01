@@ -324,3 +324,10 @@ if __name__ == '__main__':
     if args.link:
         _make_symlinks(subject_file_set, pedigree_file_set, sample_file_set, phenotype_file_sets, nfiles=args.nfiles)
     
+    # report files without matches
+    unsorted_files = [f for f in dbgap_files if f.file_type is None]
+    
+    if len(unsorted_files) > 0:
+        print("unsorted files:")
+        for f in unsorted_files:
+            print(f.basename)
