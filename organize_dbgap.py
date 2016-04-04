@@ -289,6 +289,14 @@ def _make_symlinks(subject_file_set, pedigree_file_set, sample_file_set, phenoty
     os.chdir("..")
 
 
+def decrypt(directory, decrypt_path='/projects/resources/software/apps/sratoolkit/vdb-decrypt'):
+    
+    # need to be in the dbgap workspace directory to actually do the decryption
+    os.chdir(directory)
+    # system call to the decrypt binary
+    subprocess.check_call('{vdb} .'.format(vdb=decrypt_path), shell=True)
+
+
 def organize(directory, link=False, nfiles=None):
     dbgap_files = get_file_list(directory)
     
@@ -335,4 +343,8 @@ if __name__ == '__main__':
     
     args = parser.parse_args()
     
-    organize(args.directory, link=args.link, nfiles=args.nfiles)
+    # do the decryption
+    decrypt(args.directory)
+        
+    # organize files into symlinks
+    #organize(args.directory, link=args.link, nfiles=args.nfiles)
