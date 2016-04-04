@@ -289,6 +289,30 @@ def _make_symlinks(subject_file_set, pedigree_file_set, sample_file_set, phenoty
     os.chdir("..")
 
 
+def organize(directory, link=False, nfiles=None):
+    dbgap_files = get_file_list(directory)
+    
+    # find the special file sets
+    subject_file_set = _get_special_file_set(dbgap_files, pattern="Subject")
+    pedigree_file_set = _get_special_file_set(dbgap_files, pattern="Pedigree")
+    sample_file_set = _get_special_file_set(dbgap_files, pattern="Sample")
+    
+    # find the phenotype file sets
+    phenotype_file_sets = _get_phenotype_file_sets(dbgap_files)
+    
+    # if requested, generate the symlinks in the 'organized' subdirectory
+    if link:
+        _make_symlinks(subject_file_set, pedigree_file_set, sample_file_set, phenotype_file_sets, nfiles=nfiles)
+    
+    # report files without matches
+    unsorted_files = [f for f in dbgap_files if f.file_type is None]
+    
+    if len(unsorted_files) > 0:
+        print("unsorted files:")
+        for f in unsorted_files:
+            print(f.basename)
+
+
 if __name__ == '__main__':
     """Main function:
     - decrypt dbgap files in download directory
@@ -310,25 +334,5 @@ if __name__ == '__main__':
                         help="number of phenotype files to link (for testing purposes)")
     
     args = parser.parse_args()
-        
-    dbgap_files = get_file_list(args.directory)
     
-    # find the special file sets
-    subject_file_set = _get_special_file_set(dbgap_files, pattern="Subject")
-    pedigree_file_set = _get_special_file_set(dbgap_files, pattern="Pedigree")
-    sample_file_set = _get_special_file_set(dbgap_files, pattern="Sample")
-    
-    # find the phenotype file sets
-    phenotype_file_sets = _get_phenotype_file_sets(dbgap_files)
-
-    # if requested, generate the symlinks in the 'organized' subdirectory
-    if args.link:
-        _make_symlinks(subject_file_set, pedigree_file_set, sample_file_set, phenotype_file_sets, nfiles=args.nfiles)
-    
-    # report files without matches
-    unsorted_files = [f for f in dbgap_files if f.file_type is None]
-    
-    if len(unsorted_files) > 0:
-        print("unsorted files:")
-        for f in unsorted_files:
-            print(f.basename)
+    organize(args.directory, link=args.link, nfiles=args.nfiles)
