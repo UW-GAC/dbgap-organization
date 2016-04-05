@@ -74,5 +74,40 @@ class TestDbgapFile(unittest.TestCase):
         self.assertEqual(dbgap_file.file_type, 'phenotype')
 
 
+    def test_with_different_regex_data_dict(self):
+        filename = os.path.join(self.tempdir, 'data_dict.txt')
+        subprocess.check_call('touch {file}'.format(file=filename), shell=True)
+        dbgap_file = DbgapFile(filename)
+        re_dict = {'phenotype': '^phenotype.txt$',
+                   'data_dict': '^data_dict.txt$',
+                   'var_report': '^var_report.txt$',
+                   'special': '^special.txt$',}
+        dbgap_file.set_file_type(re_dict)
+        self.assertEqual(dbgap_file.file_type, 'data_dict')
+
+
+    def test_with_different_regex_var_report(self):
+        filename = os.path.join(self.tempdir, 'var_report.txt')
+        subprocess.check_call('touch {file}'.format(file=filename), shell=True)
+        dbgap_file = DbgapFile(filename)
+        re_dict = {'phenotype': '^phenotype.txt$',
+                   'data_dict': '^data_dict.txt$',
+                   'var_report': '^var_report.txt$',
+                   'special': '^special.txt$',}
+        dbgap_file.set_file_type(re_dict)
+        self.assertEqual(dbgap_file.file_type, 'var_report')
+
+    def test_with_different_regex_special(self):
+        filename = os.path.join(self.tempdir, 'special.txt')
+        subprocess.check_call('touch {file}'.format(file=filename), shell=True)
+        dbgap_file = DbgapFile(filename)
+        re_dict = {'phenotype': '^phenotype.txt$',
+                   'data_dict': '^data_dict.txt$',
+                   'var_report': '^var_report.txt$',
+                   'special': '^special.txt$',}
+        dbgap_file.set_file_type(re_dict)
+        self.assertEqual(dbgap_file.file_type, 'special')
+
+
 if __name__ == '__main__':
     unittest.main()
