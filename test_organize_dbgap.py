@@ -11,6 +11,9 @@ from organize_dbgap import DbgapFile
 # constants
 from organize_dbgap import dbgap_re_dict
 
+def _touch(filename):
+    subprocess.check_call('touch {file}'.format(file=filename), shell=True)
+
 class TestDbgapFile(unittest.TestCase):
     
     def setUp(self):
@@ -21,34 +24,34 @@ class TestDbgapFile(unittest.TestCase):
 
     def test_str(self):
         filename = os.path.join(self.tempdir, 'testfile.xml')
-        subprocess.check_call('touch {file}'.format(file=filename), shell=True)
+        _touch(filename)
         dbgap_file = DbgapFile(filename)
         self.assertIsInstance(dbgap_file.__str__(), str)
 
     def test_get_file_type_phenotype(self):
         filename = os.path.join(self.tempdir, 'phs000284.v1.pht001903.v1.p1.c1.CFS_CARe_ECG.NPU.txt')
-        subprocess.check_call('touch {file}'.format(file=filename), shell=True)
+        _touch(filename)
         dbgap_file = DbgapFile(filename)
         self.assertEqual(dbgap_file.file_type, 'phenotype')
         self.assertEqual(dbgap_file.match.groupdict()['dbgap_id'], 'phs000284.v1.pht001903.v1')
         
     def test_get_file_type_data_dict(self):
         filename = os.path.join(self.tempdir, 'phs000284.v1.pht001903.v1.CFS_CARe_ECG.data_dict_2011_02_07.xml')
-        subprocess.check_call('touch {file}'.format(file=filename), shell=True)
+        _touch(filename)
         dbgap_file = DbgapFile(filename)
         self.assertEqual(dbgap_file.file_type, 'data_dict')
         self.assertEqual(dbgap_file.match.groupdict()['dbgap_id'], 'phs000284.v1.pht001903.v1')
     
     def test_get_file_type_var_report(self):
         filename = os.path.join(self.tempdir, 'phs000284.v1.pht001903.v1.p1.CFS_CARe_ECG.var_report_2011_02_07.xml')
-        subprocess.check_call('touch {file}'.format(file=filename), shell=True)
+        _touch(filename)
         dbgap_file = DbgapFile(filename)
         self.assertEqual(dbgap_file.file_type, 'var_report')
         self.assertEqual(dbgap_file.match.groupdict()['dbgap_id'], 'phs000284.v1.pht001903.v1')
     
     def test_get_file_type_other(self):
         filename = os.path.join(self.tempdir, 'phs000284.v1.pht001903.v1.p1.CFS_CARe_ECG.var_report_2011_02_07.xml.gz')
-        subprocess.check_call('touch {file}'.format(file=filename), shell=True)
+        _touch(filename)
         dbgap_file = DbgapFile(filename)
         self.assertIsNone(dbgap_file.file_type)
         self.assertIsNone(dbgap_file.match)
@@ -60,7 +63,7 @@ class TestDbgapFile(unittest.TestCase):
 
     def test_with_different_regex_phenotype(self):
         filename = os.path.join(self.tempdir, 'phenotype.txt')
-        subprocess.check_call('touch {file}'.format(file=filename), shell=True)
+        _touch(filename)
         dbgap_file = DbgapFile(filename)
         re_dict = {'phenotype': '^phenotype.txt$',
                    'data_dict': '^data_dict.txt$',
@@ -72,7 +75,7 @@ class TestDbgapFile(unittest.TestCase):
 
     def test_with_different_regex_data_dict(self):
         filename = os.path.join(self.tempdir, 'data_dict.txt')
-        subprocess.check_call('touch {file}'.format(file=filename), shell=True)
+        _touch(filename)
         dbgap_file = DbgapFile(filename)
         re_dict = {'phenotype': '^phenotype.txt$',
                    'data_dict': '^data_dict.txt$',
@@ -84,7 +87,7 @@ class TestDbgapFile(unittest.TestCase):
 
     def test_with_different_regex_var_report(self):
         filename = os.path.join(self.tempdir, 'var_report.txt')
-        subprocess.check_call('touch {file}'.format(file=filename), shell=True)
+        _touch(filename)
         dbgap_file = DbgapFile(filename)
         re_dict = {'phenotype': '^phenotype.txt$',
                    'data_dict': '^data_dict.txt$',
@@ -95,7 +98,7 @@ class TestDbgapFile(unittest.TestCase):
 
     def test_with_different_regex_special(self):
         filename = os.path.join(self.tempdir, 'special.txt')
-        subprocess.check_call('touch {file}'.format(file=filename), shell=True)
+        _touch(filename)
         dbgap_file = DbgapFile(filename)
         re_dict = {'phenotype': '^phenotype.txt$',
                    'data_dict': '^data_dict.txt$',
