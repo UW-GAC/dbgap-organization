@@ -2,6 +2,7 @@
 
 import os
 import sys
+import shutil # file system utilities
 import re # regular expressions
 from argparse import ArgumentParser
 import subprocess # for system commands - in this case, only diff
@@ -291,10 +292,13 @@ def _make_symlinks(subject_file_set, pedigree_file_set, sample_file_set, phenoty
 
 def decrypt(directory, decrypt_path='/projects/resources/software/apps/sratoolkit/vdb-decrypt'):
     
+    # get original directory
+    original_directory = os.getcwd()
     # need to be in the dbgap workspace directory to actually do the decryption
     os.chdir(directory)
     # system call to the decrypt binary
     subprocess.check_call('{vdb} .'.format(vdb=decrypt_path), shell=True)
+    os.chdir(original_directory)
 
 
 def organize(directory, link=False, nfiles=None):
@@ -349,6 +353,12 @@ def create_final_directory(phs, version, default_path="/projects/topmed/download
     return version_directory
     
 
+def copy_files(from_path, to_path):
+    
+    print("from: ", from_path)
+    print("to:   ", to_path)
+    shutil.copytree(from_path, to_path)
+
 if __name__ == '__main__':
     """Main function:
     - decrypt dbgap files in download directory
@@ -376,8 +386,10 @@ if __name__ == '__main__':
     output_directory = create_final_directory(phs_dict['phs'], phs_dict['v'])
     
     # do the decryption
-    #decrypt(args.directory)
+    decrypt(args.directory)
     
+    # copy files to the final "raw: directory
+    copy_files(args.directory, os.path.join(output_directory, "raw"))
     
     # organize files into symlinks
     #organize(args.directory, link=args.link, nfiles=args.nfiles)
