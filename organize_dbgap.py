@@ -320,6 +320,17 @@ def organize(directory, link=False, nfiles=None):
         for f in unsorted_files:
             print(f.basename)
 
+def parse_input_directory(directory):
+    if directory.endswith("/"):
+        directory = directory[:-1]
+    basename = os.path.basename(directory)
+    print(basename)
+    regex = re.compile(r'(?P<phs>phs\d{6})\.(?P<v>v\d+)$')
+    match = regex.match(basename)
+    if match is not None:
+        return(match.groupdict())
+    else:
+        raise ValueError('{basename} does not match expected string phs??????.v*'.format(basename=basename))
 
 if __name__ == '__main__':
     """Main function:
@@ -343,8 +354,11 @@ if __name__ == '__main__':
     
     args = parser.parse_args()
     
+    phs_dict = parse_input_directory(args.directory)
+    
     # do the decryption
-    decrypt(args.directory)
-        
+    #decrypt(args.directory)
+    
+    
     # organize files into symlinks
     #organize(args.directory, link=args.link, nfiles=args.nfiles)
