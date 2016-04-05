@@ -297,7 +297,16 @@ def _make_symlinks(subject_file_set, pedigree_file_set, sample_file_set, phenoty
 
 
 def decrypt(directory, decrypt_path='/projects/resources/software/apps/sratoolkit/vdb-decrypt'):
+    """Decrypt dbgap files
     
+    Arguments:
+    
+    directory: directory to decrypt
+    
+    Keyword arguments:
+    
+    decrypt_path: path to sratoolkit's vdb-decrypt binary
+    """
     # get original directory
     original_directory = os.getcwd()
     # need to be in the dbgap workspace directory to actually do the decryption
@@ -308,6 +317,17 @@ def decrypt(directory, decrypt_path='/projects/resources/software/apps/sratoolki
 
 
 def organize(directory, link=False, nfiles=None):
+    """Organize dbgap files by type and make symlinks
+    
+    Positional arguments
+    directory: directory to organize; should be the dbgap_raw directory
+    
+    Keyword arguments
+    link: boolean indicator whether to make symlinks or not
+    nfiles: integer argument to limit number of symlinks created (for testing purposes)
+    """
+    os.chdir(directory)
+    
     dbgap_files = get_file_list(directory)
     
     # find the special file sets
@@ -331,6 +351,16 @@ def organize(directory, link=False, nfiles=None):
             print(f.basename)
 
 def parse_input_directory(directory):
+    """Parse dbgap study accession and version out of input directory string
+    
+    Positional arguments
+    directory: directory to operate on. Can be a full path or a relative path.
+               The last subdirectory of the path is inspected for the dbgap study
+               accession and version - should look like e.g., phs000007.v1
+    
+    Return
+    dictionary with keys 'phs' (maps to e.g., 'phs000007') and 'v' (maps to e.g., 'v27')
+    """
     if directory.endswith("/"):
         directory = directory[:-1]
     basename = os.path.basename(directory)
@@ -344,7 +374,19 @@ def parse_input_directory(directory):
 
 
 def create_final_directory(phs, version, default_path="/projects/topmed/downloaded_data/dbGaP/test/"):
-
+    """Creates final output directory for files
+    
+    Positional arguments:
+    phs: phs string like phs000007
+    version: version string like v27
+    
+    Keyword arguments
+    default_path: base path indicating where to create the output directory, ie it will be:
+                  basepath/phs/version
+    
+    Returns:
+    full path to directory that was just created
+    """
     # check that it does not already exist
     phs_directory = os.path.join(default_path, phs)
     if not os.path.exists(phs_directory):
@@ -366,6 +408,9 @@ def copy_files(from_path, to_path):
     shutil.copytree(from_path, to_path)
 
 def uncompress(directory):
+    """Uncompress a directory by walking the directory tree. Currently not guaranteed
+    to be recursive, i.e. does not uncompress a file that was previously in a tar archive.
+    """
     # may need to be called recursively
     # walk through the directory and find anything that needs to be uncompressed
     for root, dirs, files in os.walk(directory):
@@ -383,13 +428,13 @@ def uncompress(directory):
 
 if __name__ == '__main__':
     """Main function:
-    - decrypt dbgap files in download directory
-    - move (copy?) files to their final location
-    - uncompress files (probably needs to be a recursive function)
+    * decrypt dbgap files in download directory
+    * copy files to their final location
+    * uncompress files (probably needs to be a recursive function)
     * parse command line arguments
     * get DbgapFile list
     * find the file sets to symlink
-    * create symlinks (if requested)
+    * create symlinks
     
     Tasks bulleted with * are already being done; those bulleted with - still need to be written.
     """
@@ -411,8 +456,6 @@ if __name__ == '__main__':
     
     #output_directory = "/projects/topmed/downloaded_data/dbGaP/test/phs000007/v27"
     uncompress(output_directory)
-    
-    os.chdir(output_directory)
     
     # organize files into symlinks
     organize(os.path.join(output_directory, "raw"), link=True)
