@@ -29,7 +29,6 @@ class TestDbgapFile(unittest.TestCase):
         filename = os.path.join(self.tempdir, 'phs000284.v1.pht001903.v1.p1.c1.CFS_CARe_ECG.NPU.txt')
         subprocess.check_call('touch {file}'.format(file=filename), shell=True)
         dbgap_file = DbgapFile(filename)
-        dbgap_file.set_file_type()
         self.assertEqual(dbgap_file.file_type, 'phenotype')
         self.assertEqual(dbgap_file.match.groupdict()['dbgap_id'], 'phs000284.v1.pht001903.v1')
         
@@ -37,7 +36,6 @@ class TestDbgapFile(unittest.TestCase):
         filename = os.path.join(self.tempdir, 'phs000284.v1.pht001903.v1.CFS_CARe_ECG.data_dict_2011_02_07.xml')
         subprocess.check_call('touch {file}'.format(file=filename), shell=True)
         dbgap_file = DbgapFile(filename)
-        dbgap_file.set_file_type()
         self.assertEqual(dbgap_file.file_type, 'data_dict')
         self.assertEqual(dbgap_file.match.groupdict()['dbgap_id'], 'phs000284.v1.pht001903.v1')
     
@@ -45,7 +43,6 @@ class TestDbgapFile(unittest.TestCase):
         filename = os.path.join(self.tempdir, 'phs000284.v1.pht001903.v1.p1.CFS_CARe_ECG.var_report_2011_02_07.xml')
         subprocess.check_call('touch {file}'.format(file=filename), shell=True)
         dbgap_file = DbgapFile(filename)
-        dbgap_file.set_file_type()
         self.assertEqual(dbgap_file.file_type, 'var_report')
         self.assertEqual(dbgap_file.match.groupdict()['dbgap_id'], 'phs000284.v1.pht001903.v1')
     
@@ -53,7 +50,6 @@ class TestDbgapFile(unittest.TestCase):
         filename = os.path.join(self.tempdir, 'phs000284.v1.pht001903.v1.p1.CFS_CARe_ECG.var_report_2011_02_07.xml.gz')
         subprocess.check_call('touch {file}'.format(file=filename), shell=True)
         dbgap_file = DbgapFile(filename)
-        dbgap_file.set_file_type()
         self.assertIsNone(dbgap_file.file_type)
         self.assertIsNone(dbgap_file.match)
 
@@ -70,7 +66,7 @@ class TestDbgapFile(unittest.TestCase):
                    'data_dict': '^data_dict.txt$',
                    'var_report': '^var_report.txt$',
                    'special': '^special.txt$',}
-        dbgap_file.set_file_type(re_dict)
+        dbgap_file._set_file_type(re_dict=re_dict)
         self.assertEqual(dbgap_file.file_type, 'phenotype')
 
 
@@ -82,7 +78,7 @@ class TestDbgapFile(unittest.TestCase):
                    'data_dict': '^data_dict.txt$',
                    'var_report': '^var_report.txt$',
                    'special': '^special.txt$',}
-        dbgap_file.set_file_type(re_dict)
+        dbgap_file._set_file_type(re_dict=re_dict)
         self.assertEqual(dbgap_file.file_type, 'data_dict')
 
 
@@ -94,7 +90,7 @@ class TestDbgapFile(unittest.TestCase):
                    'data_dict': '^data_dict.txt$',
                    'var_report': '^var_report.txt$',
                    'special': '^special.txt$',}
-        dbgap_file.set_file_type(re_dict)
+        dbgap_file._set_file_type(re_dict=re_dict)
         self.assertEqual(dbgap_file.file_type, 'var_report')
 
     def test_with_different_regex_special(self):
@@ -105,7 +101,7 @@ class TestDbgapFile(unittest.TestCase):
                    'data_dict': '^data_dict.txt$',
                    'var_report': '^var_report.txt$',
                    'special': '^special.txt$',}
-        dbgap_file.set_file_type(re_dict)
+        dbgap_file._set_file_type(re_dict=re_dict)
         self.assertEqual(dbgap_file.file_type, 'special')
 
 

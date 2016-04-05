@@ -37,16 +37,18 @@ class DbgapFile(object):
         self.basename = os.path.basename(file_path)
         
         # these will be set in the set_file_type class method
-        self.file_type = None # possibilities are 'phenotype', 'var_report', 'data_dict'
+        self.file_type = None # will store the file type
         self.match = None # will store the regular expression re.match object
 
-
+        # auto-set the file type
+        self._set_file_type() # possibilities are 'phenotype', 'var_report', 'data_dict'
+        
     def __str__(self):
         """string method for DbgapFile objects"""
         return self.full_path
     
     
-    def set_file_type(self, re_dict=dbgap_re_dict):
+    def _set_file_type(self, re_dict=dbgap_re_dict):
         """Function to set the file_type of a DbgapFile object, based on regular expression patterns"""
         
         for key, value in re_dict.items():
