@@ -235,7 +235,13 @@ def _make_symlink(dbgap_file):
     
     dbgap_file: a DbgapFile object whose path will be used to make a symlink
     """
-    os.symlink(os.path.relpath(dbgap_file.full_path), dbgap_file.basename)
+    path = os.path.relpath(dbgap_file.full_path)
+    try:
+        assert(os.path.exists(path))
+    except AssertionError:
+        print(os.getcwd())
+        print(path)
+    os.symlink(path, dbgap_file.basename)
 
 
 def _make_symlink_set(file_set):
@@ -368,12 +374,10 @@ def uncompress(directory):
             if name.endswith(".tar.gz"):
                 abspath = os.path.join(root, name)
                 cmd = 'tar -xvfz {file}'.format(file=abspath)
-                print(cmd)
                 subprocess.check_call(cmd, shell=True)
             if name.endswith(".txt.gz"):
                 abspath = os.path.join(root, name)
                 cmd = 'gunzip {file}'.format(file=abspath)
-                print(cmd)
                 subprocess.check_call(cmd, shell=True)
     
 
@@ -412,5 +416,7 @@ if __name__ == '__main__':
     #output_directory = "/projects/topmed/downloaded_data/dbGaP/test/phs000007/v27"
     uncompress(output_directory)
     
+    os.chdir(output_directory)
+    
     # organize files into symlinks
-    #organize(args.directory, link=args.link, nfiles=args.nfiles)
+    organize(os.path.join(output_directory, "raw"), link=args.link, nfiles=args.nfiles)
