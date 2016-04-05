@@ -68,7 +68,6 @@ def get_file_list(directory):
             full_path = os.path.join(root, name)
             
             dbgap_file = DbgapFile(full_path)
-            dbgap_file.set_file_type()
             
             file_list.append(dbgap_file)
     
