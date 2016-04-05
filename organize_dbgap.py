@@ -332,6 +332,23 @@ def parse_input_directory(directory):
     else:
         raise ValueError('{basename} does not match expected string phs??????.v*'.format(basename=basename))
 
+
+def create_final_directory(phs, version, default_path="/projects/topmed/downloaded_data/dbGaP/test/"):
+
+    # check that it does not already exist
+    phs_directory = os.path.join(default_path, phs)
+    if not os.path.exists(phs_directory):
+        os.mkdir(phs_directory)
+    version_directory = os.path.join(phs_directory, version)
+    if os.path.exists(version_directory):
+        msg = '{d} already exists!'.format(d=version_directory)
+        raise FileExistsError(msg)
+    else:
+        os.mkdir(version_directory)
+        
+    return version_directory
+    
+
 if __name__ == '__main__':
     """Main function:
     - decrypt dbgap files in download directory
@@ -355,6 +372,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     phs_dict = parse_input_directory(args.directory)
+    
+    output_directory = create_final_directory(phs_dict['phs'], phs_dict['v'])
     
     # do the decryption
     #decrypt(args.directory)
