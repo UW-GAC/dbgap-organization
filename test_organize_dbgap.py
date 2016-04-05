@@ -6,6 +6,7 @@ import tempfile
 import shutil
 import subprocess
 
+import organize_dbgap
 # classes
 from organize_dbgap import DbgapFile
 # constants
@@ -107,6 +108,25 @@ class TestDbgapFile(unittest.TestCase):
         dbgap_file._set_file_type(re_dict=re_dict)
         self.assertEqual(dbgap_file.file_type, 'special')
 
+
+class GetFileListTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.tempdir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.tempdir)
+
+    def test_returns_list_of_dbgap_files(self):
+        # make two different types of files in the directory
+        file1 = os.path.join(self.tempdir, 'file1.txt')
+        _touch(file1)
+        file2 = os.path.join(self.tempdir, 'file2.txt')
+        _touch(file2)
+        res = organize_dbgap.get_file_list(self.tempdir)
+        self.assertIsInstance(res, list)
+        for x in res:
+            self.assertIsInstance(x, DbgapFile)
 
 if __name__ == '__main__':
     unittest.main()
