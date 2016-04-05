@@ -359,6 +359,24 @@ def copy_files(from_path, to_path):
     print("to:   ", to_path)
     shutil.copytree(from_path, to_path)
 
+def uncompress(directory):
+    # may need to be called recursively
+    # walk through the directory and find anything that needs to be uncompressed
+    for root, dirs, files in os.walk(directory):
+        for name in files:
+            # tar file
+            if name.endswith(".tar.gz"):
+                abspath = os.path.join(root, name)
+                cmd = 'tar -xvfz {file}'.format(file=abspath)
+                print(cmd)
+                subprocess.check_call(cmd, shell=True)
+            if name.endswith(".txt.gz"):
+                abspath = os.path.join(root, name)
+                cmd = 'gunzip {file}'.format(file=abspath)
+                print(cmd)
+                subprocess.check_call(cmd, shell=True)
+    
+
 if __name__ == '__main__':
     """Main function:
     - decrypt dbgap files in download directory
@@ -388,8 +406,11 @@ if __name__ == '__main__':
     # do the decryption
     decrypt(args.directory)
     
-    # copy files to the final "raw: directory
+    # copy files to the final "raw" directory
     copy_files(args.directory, os.path.join(output_directory, "raw"))
+    
+    #output_directory = "/projects/topmed/downloaded_data/dbGaP/test/phs000007/v27"
+    uncompress(output_directory)
     
     # organize files into symlinks
     #organize(args.directory, link=args.link, nfiles=args.nfiles)
