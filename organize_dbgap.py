@@ -83,8 +83,9 @@ def _check_diffs(dbgap_file_subset):
     for i in range(1, len(dbgap_file_subset)):
         filename_b = dbgap_file_subset[i].full_path
         cmd = 'diff {file1} {file2}'.format(file1=filename_a, file2=filename_b)
-        out = subprocess.check_output(cmd, shell=True)
-        if len(out) > 0:
+        try:
+            out = subprocess.check_output(cmd, shell=True)
+        except subprocess.CalledProcessError:
             raise ValueError('files are expect to be the same but are different: {file_a}, {file_b}'.format(file_a=filename_a, file_b=filename_b))
 
 

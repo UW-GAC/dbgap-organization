@@ -153,5 +153,22 @@ class CheckDiffsTestCase(unittest.TestCase):
         # if the function is not working, this will crash
         organize_dbgap._check_diffs(dbgap_files)
 
+    def test_exception_with_diff(self):
+        file1 = os.path.join(self.tempdir, 'file1.txt')
+        file2 = os.path.join(self.tempdir, 'file2.txt')
+        file3 = os.path.join(self.tempdir, 'file3.txt')
+        text = fake.text()
+        with open(file1, 'w') as f:
+            f.write(text)
+        with open(file2, 'w') as f:
+            f.write(text)
+        with open(file3, 'w') as f:
+            f.write(fake.text())
+        # dbgap file subset
+        dbgap_files = organize_dbgap.get_file_list(self.tempdir)
+        with self.assertRaises(ValueError):
+            organize_dbgap._check_diffs(dbgap_files)
+
+
 if __name__ == '__main__':
     unittest.main()
