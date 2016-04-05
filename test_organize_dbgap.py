@@ -63,6 +63,12 @@ class TestDbgapFile(unittest.TestCase):
         self.assertIsNone(dbgap_file.file_type)
         self.assertIsNone(dbgap_file.match)
 
+    def test_exception_file_not_found(self):
+        filename = os.path.join(self.tempdir, 'phs000284.v1.pht001903.v1.p1.CFS_CARe_ECG.var_report_2011_02_07.xml.gz')
+        with self.assertRaises(FileNotFoundError):
+            dbgap_file = DbgapFile(filename)
+
+
 
 if __name__ == '__main__':
     unittest.main()
