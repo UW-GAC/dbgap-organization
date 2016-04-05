@@ -11,22 +11,16 @@ from organize_dbgap import DbgapFile
 # constants
 from organize_dbgap import dbgap_re_dict
 
-
-def _get_test_dbgap_filename(file_type):
-    pass
-
 class TestDbgapFile(unittest.TestCase):
     
     def setUp(self):
         self.tempdir = tempfile.mkdtemp()
-        print(self.tempdir)
 
     def tearDown(self):
         shutil.rmtree(self.tempdir)
 
     def test_str(self):
         filename = os.path.join(self.tempdir, 'testfile.xml')
-        print(filename)
         subprocess.check_call('touch {file}'.format(file=filename), shell=True)
         dbgap_file = DbgapFile(filename)
         self.assertIsInstance(dbgap_file.__str__(), str)
@@ -68,6 +62,16 @@ class TestDbgapFile(unittest.TestCase):
         with self.assertRaises(FileNotFoundError):
             dbgap_file = DbgapFile(filename)
 
+    def test_with_different_regex_phenotype(self):
+        filename = os.path.join(self.tempdir, 'phenotype.txt')
+        subprocess.check_call('touch {file}'.format(file=filename), shell=True)
+        dbgap_file = DbgapFile(filename)
+        re_dict = {'phenotype': '^phenotype.txt$',
+                   'data_dict': '^data_dict.txt$',
+                   'var_report': '^var_report.txt$',
+                   'special': '^special.txt$',}
+        dbgap_file.set_file_type(re_dict)
+        self.assertEqual(dbgap_file.file_type, 'phenotype')
 
 
 if __name__ == '__main__':
