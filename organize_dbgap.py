@@ -30,7 +30,7 @@ class DbgapFile(object):
         
         file_path: full path to a file downloaded from dbgap
         """
-        self.full_path = file_path
+        self.full_path = os.path.abspath(file_path)
         self.basename = os.path.basename(file_path)
         
         # these will be set in the set_file_type class method
@@ -235,12 +235,9 @@ def _make_symlink(dbgap_file):
     
     dbgap_file: a DbgapFile object whose path will be used to make a symlink
     """
+    print(dbgap_file.full_path)
     path = os.path.relpath(dbgap_file.full_path)
-    try:
-        assert(os.path.exists(path))
-    except AssertionError:
-        print(os.getcwd())
-        print(path)
+    assert(os.path.exists(path))
     os.symlink(path, dbgap_file.basename)
 
 
@@ -328,7 +325,7 @@ def organize(directory, link=False, nfiles=None):
     """
     os.chdir(directory)
     
-    dbgap_files = get_file_list(directory)
+    dbgap_files = get_file_list("raw")
     
     # find the special file sets
     subject_file_set = _get_special_file_set(dbgap_files, pattern="Subject")
@@ -444,18 +441,20 @@ if __name__ == '__main__':
     
     args = parser.parse_args()
     
-    phs_dict = parse_input_directory(args.directory)
+    directory = os.path.abspath(args.directory)
+    
+    phs_dict = parse_input_directory(directory)
     
     output_directory = create_final_directory(phs_dict['phs'], phs_dict['v'])
     
     # do the decryption
-    decrypt(args.directory)
+    decrypt(directory)
     
     # copy files to the final "raw" directory
-    copy_files(args.directory, os.path.join(output_directory, "raw"))
+    copy_files(directory, os.path.join(output_directory, "raw"))
     
     #output_directory = "/projects/topmed/downloaded_data/dbGaP/test/phs000007/v27"
     uncompress(output_directory)
     
     # organize files into symlinks
-    organize(os.path.join(output_directory, "raw"), link=True)
+    organize(output_directory, link=True)
