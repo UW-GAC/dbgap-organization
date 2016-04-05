@@ -19,14 +19,17 @@ fake = Factory.create()
 def _touch(filename):
     subprocess.check_call('touch {file}'.format(file=filename), shell=True)
 
-class TestDbgapFile(unittest.TestCase):
-    
+class TempdirTestCase(unittest.TestCase):
+
     def setUp(self):
         self.tempdir = tempfile.mkdtemp()
 
     def tearDown(self):
         shutil.rmtree(self.tempdir)
 
+
+class TestDbgapFile(TempdirTestCase):
+    
     def test_str(self):
         filename = os.path.join(self.tempdir, 'testfile.xml')
         _touch(filename)
@@ -113,13 +116,7 @@ class TestDbgapFile(unittest.TestCase):
         self.assertEqual(dbgap_file.file_type, 'special')
 
 
-class GetFileListTestCase(unittest.TestCase):
-
-    def setUp(self):
-        self.tempdir = tempfile.mkdtemp()
-
-    def tearDown(self):
-        shutil.rmtree(self.tempdir)
+class GetFileListTestCase(TempdirTestCase):
 
     def test_returns_list_of_dbgap_files(self):
         # make two different types of files in the directory
@@ -132,13 +129,7 @@ class GetFileListTestCase(unittest.TestCase):
         for x in res:
             self.assertIsInstance(x, DbgapFile)
 
-class CheckDiffsTestCase(unittest.TestCase):
-
-    def setUp(self):
-        self.tempdir = tempfile.mkdtemp()
-
-    def tearDown(self):
-        shutil.rmtree(self.tempdir)
+class CheckDiffsTestCase(TempdirTestCase):
 
     def test_working_when_no_diff(self):
         text = fake.text()
@@ -168,6 +159,9 @@ class CheckDiffsTestCase(unittest.TestCase):
         dbgap_files = organize_dbgap.get_file_list(self.tempdir)
         with self.assertRaises(ValueError):
             organize_dbgap._check_diffs(dbgap_files)
+
+
+
 
 
 if __name__ == '__main__':
