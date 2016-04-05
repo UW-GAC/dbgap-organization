@@ -31,6 +31,9 @@ class DbgapFile(object):
         file_path: full path to a file downloaded from dbgap
         """
         self.full_path = os.path.abspath(file_path)
+        if not os.path.exists(self.full_path):
+            raise FileNotFoundError(self.full_path + " does not exist")
+
         self.basename = os.path.basename(file_path)
         
         # these will be set in the set_file_type class method
