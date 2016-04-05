@@ -6,11 +6,15 @@ import tempfile
 import shutil
 import subprocess
 
+from faker import Factory
+
 import organize_dbgap
 # classes
 from organize_dbgap import DbgapFile
 # constants
 from organize_dbgap import dbgap_re_dict
+
+fake = Factory.create()
 
 def _touch(filename):
     subprocess.check_call('touch {file}'.format(file=filename), shell=True)
@@ -127,6 +131,27 @@ class GetFileListTestCase(unittest.TestCase):
         self.assertIsInstance(res, list)
         for x in res:
             self.assertIsInstance(x, DbgapFile)
+
+class CheckDiffsTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.tempdir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.tempdir)
+
+    def test_working_when_no_diff(self):
+        text = fake.text()
+        file1 = os.path.join(self.tempdir, 'file1.txt')
+        file2 = os.path.join(self.tempdir, 'file2.txt')
+        with open(file1, 'w') as f:
+            f.write(text)
+        with open(file2, 'w') as f:
+            f.write(text)
+        # dbgap file subset
+        dbgap_files = organize_dbgap.get_file_list(self.tempdir)
+        # if the function is not working, this will crash
+        organize_dbgap._check_diffs(dbgap_files)
 
 if __name__ == '__main__':
     unittest.main()
