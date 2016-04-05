@@ -396,10 +396,6 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     
     parser.add_argument("directory")
-    parser.add_argument("--link", "-l", default=False, action="store_true",
-                        help="create symlinks for the dbgap files?")
-    parser.add_argument("--nfiles", "-n", dest="nfiles", type=int, default=None,
-                        help="number of phenotype files to link (for testing purposes)")
     
     args = parser.parse_args()
     
@@ -419,4 +415,4 @@ if __name__ == '__main__':
     os.chdir(output_directory)
     
     # organize files into symlinks
-    organize(os.path.join(output_directory, "raw"), link=args.link, nfiles=args.nfiles)
+    organize(os.path.join(output_directory, "raw"), link=True)
