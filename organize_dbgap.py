@@ -23,7 +23,7 @@ dbgap_re_dict = {'data_dict': r'^(?P<dbgap_id>phs\d{6}\.v\d+?\.pht\d{6}\.v\d+?)\
 class DbgapFile(object):
     """Class to hold information about files downloaded from dbgap.
     """
-    def __init__(self, file_path):
+    def __init__(self, file_path, check_exists=True):
         """Constructor function for DbgapFile instances.
         
         Arguments:
@@ -31,7 +31,8 @@ class DbgapFile(object):
         file_path: full path to a file downloaded from dbgap
         """
         self.full_path = os.path.abspath(file_path)
-        if not os.path.exists(self.full_path):
+        
+        if check_exists and not os.path.exists(self.full_path):
             raise FileNotFoundError(self.full_path + " does not exist")
 
         self.basename = os.path.basename(file_path)

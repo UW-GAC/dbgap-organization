@@ -69,6 +69,11 @@ class TestDbgapFile(TempdirTestCase):
         with self.assertRaises(FileNotFoundError):
             dbgap_file = DbgapFile(filename)
 
+    def test_works_with_nonexistent_file_and_check_exists_false(self):
+        filename = os.path.join(self.tempdir, 'phs000284.v1.pht001903.v1.p1.CFS_CARe_ECG.var_report_2011_02_07.xml.gz')
+        # this should not crash
+        dbgap_file = DbgapFile(filename, check_exists=False)
+
     def test_with_different_regex_phenotype(self):
         filename = os.path.join(self.tempdir, 'phenotype.txt')
         _touch(filename)
