@@ -2,6 +2,7 @@
 
 import os
 import sys
+import shutil # file system utilities
 import re # regular expressions
 from argparse import ArgumentParser
 import subprocess # for system commands - in this case, only diff
@@ -29,7 +30,7 @@ class DbgapFile(object):
         
         file_path: full path to a file downloaded from dbgap
         """
-        self.full_path = file_path
+        self.full_path = os.path.abspath(file_path)
         self.basename = os.path.basename(file_path)
         
         # these will be set in the set_file_type class method
@@ -234,7 +235,10 @@ def _make_symlink(dbgap_file):
     
     dbgap_file: a DbgapFile object whose path will be used to make a symlink
     """
-    os.symlink(os.path.relpath(dbgap_file.full_path), dbgap_file.basename)
+    print(dbgap_file.full_path)
+    path = os.path.relpath(dbgap_file.full_path)
+    assert(os.path.exists(path))
+    os.symlink(path, dbgap_file.basename)
 
 
 def _make_symlink_set(file_set):
@@ -289,29 +293,39 @@ def _make_symlinks(subject_file_set, pedigree_file_set, sample_file_set, phenoty
     os.chdir("..")
 
 
-if __name__ == '__main__':
-    """Main function:
-    - decrypt dbgap files in download directory
-    - move (copy?) files to their final location
-    - uncompress files (probably needs to be a recursive function)
-    * parse command line arguments
-    * get DbgapFile list
-    * find the file sets to symlink
-    * create symlinks (if requested)
+def decrypt(directory, decrypt_path='/projects/resources/software/apps/sratoolkit/vdb-decrypt'):
+    """Decrypt dbgap files
     
-    Tasks bulleted with * are already being done; those bulleted with - still need to be written.
+    Arguments:
+    
+    directory: directory to decrypt
+    
+    Keyword arguments:
+    
+    decrypt_path: path to sratoolkit's vdb-decrypt binary
     """
-    parser = ArgumentParser()
+    # get original directory
+    original_directory = os.getcwd()
+    # need to be in the dbgap workspace directory to actually do the decryption
+    os.chdir(directory)
+    # system call to the decrypt binary
+    subprocess.check_call('{vdb} .'.format(vdb=decrypt_path), shell=True)
+    os.chdir(original_directory)
+
+
+def organize(directory, link=False, nfiles=None):
+    """Organize dbgap files by type and make symlinks
     
-    parser.add_argument("directory")
-    parser.add_argument("--link", "-l", default=False, action="store_true",
-                        help="create symlinks for the dbgap files?")
-    parser.add_argument("--nfiles", "-n", dest="nfiles", type=int, default=None,
-                        help="number of phenotype files to link (for testing purposes)")
+    Positional arguments
+    directory: directory to organize; should be the dbgap_raw directory
     
-    args = parser.parse_args()
-        
-    dbgap_files = get_file_list(args.directory)
+    Keyword arguments
+    link: boolean indicator whether to make symlinks or not
+    nfiles: integer argument to limit number of symlinks created (for testing purposes)
+    """
+    os.chdir(directory)
+    
+    dbgap_files = get_file_list("raw")
     
     # find the special file sets
     subject_file_set = _get_special_file_set(dbgap_files, pattern="Subject")
@@ -320,10 +334,10 @@ if __name__ == '__main__':
     
     # find the phenotype file sets
     phenotype_file_sets = _get_phenotype_file_sets(dbgap_files)
-
+    
     # if requested, generate the symlinks in the 'organized' subdirectory
-    if args.link:
-        _make_symlinks(subject_file_set, pedigree_file_set, sample_file_set, phenotype_file_sets, nfiles=args.nfiles)
+    if link:
+        _make_symlinks(subject_file_set, pedigree_file_set, sample_file_set, phenotype_file_sets, nfiles=nfiles)
     
     # report files without matches
     unsorted_files = [f for f in dbgap_files if f.file_type is None]
@@ -332,3 +346,115 @@ if __name__ == '__main__':
         print("unsorted files:")
         for f in unsorted_files:
             print(f.basename)
+
+def parse_input_directory(directory):
+    """Parse dbgap study accession and version out of input directory string
+    
+    Positional arguments
+    directory: directory to operate on. Can be a full path or a relative path.
+               The last subdirectory of the path is inspected for the dbgap study
+               accession and version - should look like e.g., phs000007.v1
+    
+    Return
+    dictionary with keys 'phs' (maps to e.g., 'phs000007') and 'v' (maps to e.g., 'v27')
+    """
+    if directory.endswith("/"):
+        directory = directory[:-1]
+    basename = os.path.basename(directory)
+    print(basename)
+    regex = re.compile(r'(?P<phs>phs\d{6})\.(?P<v>v\d+)$')
+    match = regex.match(basename)
+    if match is not None:
+        return(match.groupdict())
+    else:
+        raise ValueError('{basename} does not match expected string phs??????.v*'.format(basename=basename))
+
+
+def create_final_directory(phs, version, default_path="/projects/topmed/downloaded_data/dbGaP/test/"):
+    """Creates final output directory for files
+    
+    Positional arguments:
+    phs: phs string like phs000007
+    version: version string like v27
+    
+    Keyword arguments
+    default_path: base path indicating where to create the output directory, ie it will be:
+                  basepath/phs/version
+    
+    Returns:
+    full path to directory that was just created
+    """
+    # check that it does not already exist
+    phs_directory = os.path.join(default_path, phs)
+    if not os.path.exists(phs_directory):
+        os.mkdir(phs_directory)
+    version_directory = os.path.join(phs_directory, version)
+    if os.path.exists(version_directory):
+        msg = '{d} already exists!'.format(d=version_directory)
+        raise FileExistsError(msg)
+    else:
+        os.mkdir(version_directory)
+        
+    return version_directory
+    
+
+def copy_files(from_path, to_path):
+    
+    print("from: ", from_path)
+    print("to:   ", to_path)
+    shutil.copytree(from_path, to_path)
+
+def uncompress(directory):
+    """Uncompress a directory by walking the directory tree. Currently not guaranteed
+    to be recursive, i.e. does not uncompress a file that was previously in a tar archive.
+    """
+    # may need to be called recursively
+    # walk through the directory and find anything that needs to be uncompressed
+    for root, dirs, files in os.walk(directory):
+        for name in files:
+            # tar file
+            if name.endswith(".tar.gz"):
+                abspath = os.path.join(root, name)
+                cmd = 'tar -xvfz {file}'.format(file=abspath)
+                subprocess.check_call(cmd, shell=True)
+            if name.endswith(".txt.gz"):
+                abspath = os.path.join(root, name)
+                cmd = 'gunzip {file}'.format(file=abspath)
+                subprocess.check_call(cmd, shell=True)
+    
+
+if __name__ == '__main__':
+    """Main function:
+    * decrypt dbgap files in download directory
+    * copy files to their final location
+    * uncompress files (probably needs to be a recursive function)
+    * parse command line arguments
+    * get DbgapFile list
+    * find the file sets to symlink
+    * create symlinks
+    
+    Tasks bulleted with * are already being done; those bulleted with - still need to be written.
+    """
+    parser = ArgumentParser()
+    
+    parser.add_argument("directory")
+    
+    args = parser.parse_args()
+    
+    directory = os.path.abspath(args.directory)
+    
+    phs_dict = parse_input_directory(directory)
+    
+    output_directory = create_final_directory(phs_dict['phs'], phs_dict['v'])
+    
+    # do the decryption
+    decrypt(directory)
+    
+    # copy files to the final "raw" directory
+    copy_files(directory, os.path.join(output_directory, "raw"))
+    
+    #output_directory = "/projects/topmed/downloaded_data/dbGaP/test/phs000007/v27"
+    uncompress(output_directory)
+    
+    # organize files into symlinks
+    organize(output_directory, link=True)
