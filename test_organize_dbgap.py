@@ -494,5 +494,19 @@ class DbgapDirectoryStructureTestCase(TempdirTestCase):
         super(DbgapDirectoryStructureTestCase, self).tearDown()
 
 
+class GetSpecialFileSetTestCase(DbgapDirectoryStructureTestCase):
+    
+    def test_working_with_subject_pattern(self):
+        self._make_file_set('phenotype')
+        self._make_file_set('subject')
+        dbgap_files = organize_dbgap.get_file_list(self.tempdir)
+        file_set = organize_dbgap._get_special_file_set(dbgap_files, pattern='Subject')
+        self.assertIsInstance(file_set, dict)
+        self.assertIsInstance(file_set['var_report'], DbgapFile)
+        self.assertIsInstance(file_set['var_report'], DbgapFile)
+        self.assertIsInstance(file_set['data_files'], list)
+        self.assertTrue(file_set['var_report'].full_path in [self.var_report1.full_path, self.var_report2.full_path])
+
+
 if __name__ == '__main__':
     unittest.main()
