@@ -232,8 +232,8 @@ class CheckDiffsTestCase(TempdirTestCase):
         with self.assertRaises(ValueError):
             organize_dbgap._check_diffs(dbgap_files)
 
-class GetFileMatchTestCase(unittest.TestCase):
-    # does not need a tempdir, since we don't need the files to actually exist
+class GetFileMatchTestCase(TempdirTestCase):
+    # some of the methods will need a temp directory
 
     def test_working_data_dict(self):
         phs = 7
@@ -282,6 +282,62 @@ class GetFileMatchTestCase(unittest.TestCase):
 
         files = [xml_file, other_file, file_to_match]
         self.assertIsNone(organize_dbgap._get_file_match(files, file_to_match, 'var_report', check_diffs=False))
+
+    def test_working_with_check_diffs_no_diff(self):
+        
+        # make two directories, one for each consent group
+        dir1 = os.path.join(self.tempdir, 'dir1')
+        dir2 = os.path.join(self.tempdir, 'dir2')
+        os.mkdir(dir1)
+        os.mkdir(dir2)
+
+        phs = 7
+        pht = 1
+        text = fake.text()
+
+        # make a set of matching dd files
+        base_dd_filename = _get_test_dbgap_filename('data_dict', phs=phs, phs_v=1, pht=pht, pht_v=1)
+        filename_dd1 = os.path.join(dir1, base_dd_filename)
+        _touch(filename_dd1, text=text)
+        dd1 = DbgapFile(filename_dd1)
+        filename_dd2 = os.path.join(dir2, base_dd_filename)
+        _touch(filename_dd2, text=text)
+        dd2 = DbgapFile(filename_dd2)
+
+        # make the file to match
+        filename_to_match = _get_test_dbgap_filename('phenotype', phs=phs, phs_v=1, pht=pht, pht_v=1)
+        phenotype = DbgapFile(filename_to_match, check_exists=False)
+
+        files = [dd1, phenotype, dd2]
+        self.assertEqual(organize_dbgap._get_file_match(files, phenotype, 'data_dict', check_diffs=True), dd1)
+
+    def test_exception_with_check_diffs(self):
+        
+        # make two directories, one for each consent group
+        dir1 = os.path.join(self.tempdir, 'dir1')
+        dir2 = os.path.join(self.tempdir, 'dir2')
+        os.mkdir(dir1)
+        os.mkdir(dir2)
+
+        phs = 7
+        pht = 1
+
+        # make a set of non-matching dd files whose names indicate they should match
+        base_dd_filename = _get_test_dbgap_filename('data_dict', phs=phs, phs_v=1, pht=pht, pht_v=1)
+        filename_dd1 = os.path.join(dir1, base_dd_filename)
+        _touch(filename_dd1, text=fake.text())
+        dd1 = DbgapFile(filename_dd1)
+        filename_dd2 = os.path.join(dir2, base_dd_filename)
+        _touch(filename_dd2, text=fake.text())
+        dd2 = DbgapFile(filename_dd2)
+
+        # make the file to match
+        filename_to_match = _get_test_dbgap_filename('phenotype', phs=phs, phs_v=1, pht=pht, pht_v=1)
+        phenotype = DbgapFile(filename_to_match, check_exists=False)
+
+        files = [dd1, phenotype, dd2]
+        with self.assertRaises(ValueError):
+            organize_dbgap._get_file_match(files, phenotype, 'data_dict', check_diffs=True)
 
 
 if __name__ == '__main__':
