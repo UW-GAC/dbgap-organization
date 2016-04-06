@@ -244,8 +244,8 @@ def _make_symlinks(subject_file_set, pedigree_file_set, sample_file_set, phenoty
 
     # special files first
     if not os.path.exists("Subjects"):
-        os.makedirs("Subjects")
-    os.chdir("Subjects")
+        os.makedirs("Subject")
+    os.chdir("Subject")
 
     _make_symlink_set(subject_file_set)
     _make_symlink_set(sample_file_set)
