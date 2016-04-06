@@ -17,11 +17,37 @@ from organize_dbgap import dbgap_re_dict
 fake = Factory.create()
 
 def _touch(filename, text=""):
+    """Creates a file of a given filename.
+
+    Positional arguments:
+    filename: the filename to create
+
+    Keyword arguments
+    text: text to write to the file
+    """
     with open(filename, 'w') as f:
         f.write(text)
 
 
 def _get_test_dbgap_filename(file_type, **kwargs):
+    """Construct and return a test dbgap file name with the correct pattern for a given file_type
+
+    Positional arguments
+    file_type: dbgap file type to create, one of phenotype, var_report, data_dict, subject, sample, or pedigree
+
+    Keyword arguemnts:
+    **kwargs: normal **kwargs syntax in python, but can be used to construct similar filenames.
+              Not all arguments are used for all types.
+        phs: study accession
+        phs_v: study version
+        pht: dataset accession
+        pht_v: dataset version
+        base: basename (ie dataset name before dbgap appends accession numbers)
+        ps: participant set
+        consent_group: numeric indicator of consent group
+        consent_code: consent code ie HMB-NPU
+
+    """
     phs = kwargs.get('phs', fake.pyint())
     phs_v = kwargs.get('phs_v', fake.pyint())
     pht = kwargs.get('pht', fake.pyint())
@@ -57,37 +83,44 @@ class GetTestDbgapFilenameTestCase(unittest.TestCase):
     """Tests for the helper function _get_test_dbgap_filename"""
 
     def test_phenotype(self):
+        """DbgapFile objects have correct file_type for test phenotype files"""
         filename = _get_test_dbgap_filename('phenotype')
         dbgap_file = DbgapFile(filename, check_exists=False)
         self.assertEqual(dbgap_file.file_type, 'phenotype')
 
     def test_var_report(self):
+        """DbgapFile objects have correct file_type for test var_report files"""
         filename = _get_test_dbgap_filename('var_report')
         dbgap_file = DbgapFile(filename, check_exists=False)
         self.assertEqual(dbgap_file.file_type, 'var_report')
 
     def test_data_dict(self):
+        """DbgapFile objects have correct file_type for test data_dict files"""
         filename = _get_test_dbgap_filename('data_dict')
         dbgap_file = DbgapFile(filename, check_exists=False)
         self.assertEqual(dbgap_file.file_type, 'data_dict')
 
     def test_subject(self):
+        """DbgapFile objects have correct file_type for test subject files"""
         filename = _get_test_dbgap_filename('subject')
         dbgap_file = DbgapFile(filename, check_exists=False)
         self.assertEqual(dbgap_file.file_type, 'special')
 
     def test_pedigree(self):
+        """DbgapFile objects have correct file_type for test pedigree files"""
         filename = _get_test_dbgap_filename('pedigree')
         dbgap_file = DbgapFile(filename, check_exists=False)
         self.assertEqual(dbgap_file.file_type, 'special')
 
     def test_sample(self):
+        """DbgapFile objects have correct file_type for test sample files"""
         filename = _get_test_dbgap_filename('sample')
         dbgap_file = DbgapFile(filename, check_exists=False)
         self.assertEqual(dbgap_file.file_type, 'special')
 
-class TempdirTestCase(unittest.TestCase):
 
+class TempdirTestCase(unittest.TestCase):
+    """Superclass to hold setUp and tearDown methods for TestCases that need temporary directories"""
     def setUp(self):
         self.tempdir = tempfile.mkdtemp()
 
@@ -96,14 +129,17 @@ class TempdirTestCase(unittest.TestCase):
 
 
 class TestDbgapFile(TempdirTestCase):
-    
+    """TestCase class for DbgapFile class"""
+
     def test_str(self):
+        """test that str method returns a string"""
         filename = os.path.join(self.tempdir, 'testfile.xml')
         _touch(filename)
         dbgap_file = DbgapFile(filename)
         self.assertIsInstance(dbgap_file.__str__(), str)
 
     def test_get_file_type_phenotype(self):
+        """DbgapFile._set_file_type works correctly for phenotoype files"""
         filename = os.path.join(self.tempdir, 'phs000284.v1.pht001903.v1.p1.c1.CFS_CARe_ECG.NPU.txt')
         _touch(filename)
         dbgap_file = DbgapFile(filename)
@@ -111,6 +147,7 @@ class TestDbgapFile(TempdirTestCase):
         self.assertEqual(dbgap_file.match.groupdict()['dbgap_id'], 'phs000284.v1.pht001903.v1')
         
     def test_get_file_type_data_dict(self):
+        """DbgapFile._set_file_type works correctly for data_dict files"""
         filename = os.path.join(self.tempdir, 'phs000284.v1.pht001903.v1.CFS_CARe_ECG.data_dict_2011_02_07.xml')
         _touch(filename)
         dbgap_file = DbgapFile(filename)
@@ -118,6 +155,7 @@ class TestDbgapFile(TempdirTestCase):
         self.assertEqual(dbgap_file.match.groupdict()['dbgap_id'], 'phs000284.v1.pht001903.v1')
     
     def test_get_file_type_var_report(self):
+        """DbgapFile._set_file_type works correctly for var_report files"""
         filename = os.path.join(self.tempdir, 'phs000284.v1.pht001903.v1.p1.CFS_CARe_ECG.var_report_2011_02_07.xml')
         _touch(filename)
         dbgap_file = DbgapFile(filename)
@@ -125,6 +163,7 @@ class TestDbgapFile(TempdirTestCase):
         self.assertEqual(dbgap_file.match.groupdict()['dbgap_id'], 'phs000284.v1.pht001903.v1')
     
     def test_get_file_type_other(self):
+        """DbgapFile._set_file_type works correctly for files that don't match a regex"""
         filename = os.path.join(self.tempdir, 'phs000284.v1.pht001903.v1.p1.CFS_CARe_ECG.var_report_2011_02_07.xml.gz')
         _touch(filename)
         dbgap_file = DbgapFile(filename)
@@ -132,16 +171,19 @@ class TestDbgapFile(TempdirTestCase):
         self.assertIsNone(dbgap_file.match)
 
     def test_exception_file_not_found(self):
+        """is an exception raised when the file is not found?"""
         filename = os.path.join(self.tempdir, 'phs000284.v1.pht001903.v1.p1.CFS_CARe_ECG.var_report_2011_02_07.xml.gz')
         with self.assertRaises(FileNotFoundError):
             dbgap_file = DbgapFile(filename)
 
     def test_works_with_nonexistent_file_and_check_exists_false(self):
+        """is an exception not raised when the file is not found but check_exists=False?"""
         filename = os.path.join(self.tempdir, 'phs000284.v1.pht001903.v1.p1.CFS_CARe_ECG.var_report_2011_02_07.xml.gz')
         # this should not crash
         dbgap_file = DbgapFile(filename, check_exists=False)
 
     def test_with_different_regex_phenotype(self):
+        """test that DbgapFile._set_file_type works with a different regex pattern dictionary for phentoype files"""
         filename = os.path.join(self.tempdir, 'phenotype.txt')
         _touch(filename)
         dbgap_file = DbgapFile(filename)
@@ -152,8 +194,8 @@ class TestDbgapFile(TempdirTestCase):
         dbgap_file._set_file_type(re_dict=re_dict)
         self.assertEqual(dbgap_file.file_type, 'phenotype')
 
-
     def test_with_different_regex_data_dict(self):
+        """test that DbgapFile._set_file_type works with a different regex pattern dictionary for data dict files"""
         filename = os.path.join(self.tempdir, 'data_dict.txt')
         _touch(filename)
         dbgap_file = DbgapFile(filename)
@@ -166,6 +208,7 @@ class TestDbgapFile(TempdirTestCase):
 
 
     def test_with_different_regex_var_report(self):
+        """test that DbgapFile._set_file_type works with a different regex pattern dictionary for var_report files"""
         filename = os.path.join(self.tempdir, 'var_report.txt')
         _touch(filename)
         dbgap_file = DbgapFile(filename)
@@ -177,6 +220,7 @@ class TestDbgapFile(TempdirTestCase):
         self.assertEqual(dbgap_file.file_type, 'var_report')
 
     def test_with_different_regex_special(self):
+        """test that DbgapFile._set_file_type works with a different regex pattern dictionary for special files"""
         filename = os.path.join(self.tempdir, 'special.txt')
         _touch(filename)
         dbgap_file = DbgapFile(filename)
@@ -189,8 +233,10 @@ class TestDbgapFile(TempdirTestCase):
 
 
 class GetFileListTestCase(TempdirTestCase):
+    """class to hold tests for _get_file_list function"""
 
     def test_returns_list_of_dbgap_files(self):
+        """is a list of DbagpFile objects returned?"""
         # make two different types of files in the directory
         file1 = os.path.join(self.tempdir, 'file1.txt')
         _touch(file1)
@@ -202,8 +248,10 @@ class GetFileListTestCase(TempdirTestCase):
             self.assertIsInstance(x, DbgapFile)
 
 class CheckDiffsTestCase(TempdirTestCase):
+    """class to hold tests for _check_diffs function"""
 
     def test_working_when_no_diff(self):
+        """does _check_diffs work when the files are not different?"""
         text = fake.text()
         file1 = os.path.join(self.tempdir, 'file1.txt')
         file2 = os.path.join(self.tempdir, 'file2.txt')
@@ -217,6 +265,7 @@ class CheckDiffsTestCase(TempdirTestCase):
         organize_dbgap._check_diffs(dbgap_files)
 
     def test_exception_with_diff(self):
+        """Does _check_diffs raise a ValueError exception if the files are different?"""
         file1 = os.path.join(self.tempdir, 'file1.txt')
         file2 = os.path.join(self.tempdir, 'file2.txt')
         file3 = os.path.join(self.tempdir, 'file3.txt')
@@ -233,9 +282,10 @@ class CheckDiffsTestCase(TempdirTestCase):
             organize_dbgap._check_diffs(dbgap_files)
 
 class GetFileMatchTestCase(TempdirTestCase):
-    # some of the methods will need a temp directory
+    """Class to hold tests for _get_file_match function"""
 
     def test_working_data_dict(self):
+        """does it properly match data dictionaries?"""
         phs = 7
         pht_to_match = 1
         other_pht = 2
@@ -252,6 +302,7 @@ class GetFileMatchTestCase(TempdirTestCase):
         self.assertEqual(organize_dbgap._get_file_match(files, file_to_match, 'data_dict', check_diffs=False), xml_file)
 
     def test_working_var_report(self):
+        """does it properly match var_reports?"""
         phs = 7
         pht_to_match = 1
         other_pht = 2
@@ -268,6 +319,7 @@ class GetFileMatchTestCase(TempdirTestCase):
         self.assertEqual(organize_dbgap._get_file_match(files, file_to_match, 'data_dict', check_diffs=False), xml_file)
 
     def test_returns_none_if_no_match_with_different_file_type(self):
+        """does it return None if there are no matches?"""
         phs = 7
         pht_to_match = 1
         other_pht = 2
@@ -284,6 +336,7 @@ class GetFileMatchTestCase(TempdirTestCase):
         self.assertIsNone(organize_dbgap._get_file_match(files, file_to_match, 'var_report', check_diffs=False))
 
     def test_working_with_multiple_matches_returns_one(self):
+        """does it return only one file if multiple matches are found?"""
         # make two directories, one for each consent group
         dir1 = os.path.join(self.tempdir, 'dir1')
         dir2 = os.path.join(self.tempdir, 'dir2')
@@ -306,7 +359,7 @@ class GetFileMatchTestCase(TempdirTestCase):
         self.assertEqual(organize_dbgap._get_file_match(files, phenotype, 'data_dict', check_diffs=False), dd1)
 
     def test_working_with_check_diffs_no_diff(self):
-        
+        """does it work with check_diffs and no differences?"""
         # make two directories, one for each consent group
         dir1 = os.path.join(self.tempdir, 'dir1')
         dir2 = os.path.join(self.tempdir, 'dir2')
@@ -334,7 +387,7 @@ class GetFileMatchTestCase(TempdirTestCase):
         self.assertEqual(organize_dbgap._get_file_match(files, phenotype, 'data_dict', check_diffs=True), dd1)
 
     def test_exception_with_check_diffs(self):
-        
+        """does it raise an exception with check_diffs and different matching files?"""
         # make two directories, one for each consent group
         dir1 = os.path.join(self.tempdir, 'dir1')
         dir2 = os.path.join(self.tempdir, 'dir2')
@@ -360,6 +413,7 @@ class GetFileMatchTestCase(TempdirTestCase):
         files = [dd1, phenotype, dd2]
         with self.assertRaises(ValueError):
             organize_dbgap._get_file_match(files, phenotype, 'data_dict', check_diffs=True)
+
 
 
 if __name__ == '__main__':
