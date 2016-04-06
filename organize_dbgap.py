@@ -7,7 +7,7 @@ import re # regular expressions
 from argparse import ArgumentParser
 import subprocess # for system commands - in this case, only diff
 from pprint import pprint
-
+import errno
 
 # regular expression matchers for various kinds of dbgap files
 dbgap_re_dict = {'data_dict': r'^(?P<dbgap_id>phs\d{6}\.v\d+?\.pht\d{6}\.v\d+?)\.(?P<base>.+?)\.data_dict(?P<extra>\w{0,}?)\.xml$',
@@ -208,9 +208,9 @@ def _make_symlink(dbgap_file):
     
     dbgap_file: a DbgapFile object whose path will be used to make a symlink
     """
-    print(dbgap_file.full_path)
     path = os.path.relpath(dbgap_file.full_path)
-    assert(os.path.exists(path))
+    if not os.path.exists(path):
+        raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), path)
     os.symlink(path, dbgap_file.basename)
 
 
