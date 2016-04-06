@@ -418,6 +418,60 @@ class GetFileMatchTestCase(TempdirTestCase):
 class DbgapDirectoryStructureTestCase(TempdirTestCase):
     """superclass that auto-creates a dbgap directory structure"""
 
+    def _make_file_set(self, file_type):
+        # make a set of phenotype/var_reports/data_dicts in each
+        kwargs = {'phs': self.phs,
+                  'phs_v': self.phs_v,
+                  'pht': fake.pyint(),
+                  'pht_v': fake.pyint(),
+                  'base': fake.word(),
+                  'ps': self.ps,
+                  'consent': 1,
+                  'consent_code': self.consent_code1
+                  }
+
+        if file_type == 'subject':
+            kwargs['base'] = 'Subject'
+        if file_type == 'sample':
+            kwargs['base'] = 'Sample'
+        if file_type == 'pedigree':
+            kwargs['base'] = 'Pedigree'
+
+        # consent group 1
+        # data
+        filename = os.path.join(self.dir1, _get_test_dbgap_filename(file_type, **kwargs))
+        _touch(filename)
+        self.data_file1 = DbgapFile(filename)
+
+        # var reports
+        filename = os.path.join(self.dir1, _get_test_dbgap_filename('var_report', **kwargs))
+        _touch(filename)
+        self.var_report1 = DbgapFile(filename)
+
+        # data_dicts
+        filename = os.path.join(self.dir1, _get_test_dbgap_filename('data_dict', **kwargs))
+        _touch(filename)
+        self.dd1 = DbgapFile(filename)
+
+        # consent group 2
+        kwargs['consent'] = 2
+        kwargs['consent_code'] = self.consent_code2
+
+        # data
+        filename = os.path.join(self.dir2, _get_test_dbgap_filename(file_type, **kwargs))
+        _touch(filename)
+        self.data_file2 = DbgapFile(filename)
+
+        # var reports
+        filename = os.path.join(self.dir2, _get_test_dbgap_filename('var_report', **kwargs))
+        _touch(filename)
+        self.var_report2 = DbgapFile(filename)
+
+        # data_dicts
+        filename = os.path.join(self.dir2, _get_test_dbgap_filename('data_dict', **kwargs))
+        _touch(filename)
+        self.dd2 = DbgapFile(filename)
+
     def setUp(self):
         # call superclass constructor
         super(DbgapDirectoryStructureTestCase, self).setUp()
@@ -427,62 +481,13 @@ class DbgapDirectoryStructureTestCase(TempdirTestCase):
         self.dir2 = os.path.join(self.tempdir, "dir2")
         os.mkdir(self.dir2)
 
-        # make a set of phenotype/var_reports/data_dicts in each
-        kwargs = {'phs': fake.pyint(),
-                  'phs_v': fake.pyint(),
-                  'pht': fake.pyint(),
-                  'pht_v': fake.pyint(),
-                  'base': fake.word(),
-                  'ps': fake.pyint()
-                  }
+        self.phs = fake.pyint()
+        self.phs_v = fake.pyint()
+        self.ps = fake.pyint()
 
-        # phenotype files
-        filename = os.path.join(self.dir1, _get_test_dbgap_filename('phenotype', consent_group=1, **kwargs))
-        _touch(filename)
-        self.phenotype1 = DbgapFile(filename)
-        filename = os.path.join(self.dir2, _get_test_dbgap_filename('phenotype', consent_group=2, **kwargs))
-        _touch(filename)
-        self.phenotype2 = DbgapFile(filename)
+        self.consent_code1 = fake.word()
+        self.consent_code2 = fake.word()
 
-        # var reports
-        filename = os.path.join(self.dir1, _get_test_dbgap_filename('var_report', consent_group=1, **kwargs))
-        _touch(filename)
-        self.var_report1 = DbgapFile(filename)
-        filename = os.path.join(self.dir2, _get_test_dbgap_filename('var_report', consent_group=2, **kwargs))
-        _touch(filename)
-        self.var_report2 = DbgapFile(filename)
-
-        # data_dicts
-        filename = os.path.join(self.dir1, _get_test_dbgap_filename('data_dict', consent_group=1, **kwargs))
-        _touch(filename)
-        self.dd1 = DbgapFile(filename)
-        filename = os.path.join(self.dir2, _get_test_dbgap_filename('data_dict', consent_group=2, **kwargs))
-        _touch(filename)
-        self.dd2 = DbgapFile(filename)
-
-        # special files - subject
-        filename = os.path.join(self.dir1, _get_test_dbgap_filename('subject', consent_group=1, **kwargs))
-        _touch(filename)
-        self.subject1 = DbgapFile(filename)
-        filename = os.path.join(self.dir2, _get_test_dbgap_filename('subject', consent_group=2, **kwargs))
-        _touch(filename)
-        self.subject2 = DbgapFile(filename)
-
-        # special files - sample
-        filename = os.path.join(self.dir1, _get_test_dbgap_filename('sample', consent_group=1, **kwargs))
-        _touch(filename)
-        self.sample1 = DbgapFile(filename)
-        filename = os.path.join(self.dir2, _get_test_dbgap_filename('sample', consent_group=2, **kwargs))
-        _touch(filename)
-        self.sample2 = DbgapFile(filename)
-
-        # special files - pedigree
-        filename = os.path.join(self.dir1, _get_test_dbgap_filename('pedigree', consent_group=1, **kwargs))
-        _touch(filename)
-        self.pedigree1 = DbgapFile(filename)
-        filename = os.path.join(self.dir2, _get_test_dbgap_filename('pedigree', consent_group=2, **kwargs))
-        _touch(filename)
-        self.pedigree2 = DbgapFile(filename)
 
     def tearDown(self):
         # call superclass constructor
