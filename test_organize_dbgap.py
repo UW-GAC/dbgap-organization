@@ -581,6 +581,17 @@ class GetPhenotypeFileSetsTestCase(DbgapDirectoryStructureTestCase):
         self.assertTrue(file_set['data_files'][0].full_path in [self.data_file1.full_path, self.data_file2.full_path])
         self.assertTrue(file_set['data_files'][1].full_path in [self.data_file1.full_path, self.data_file2.full_path])
 
+    def test_working_with_two_phenotype_file_sets(self):
+        self._make_file_set('phenotype')
+        pheno_file1 = self.data_file1
+        self._make_file_set('phenotype')
+        pheno_file2 = self.data_file1
+        
+        dbgap_files = organize_dbgap.get_file_list(self.tempdir)
+        file_sets = organize_dbgap._get_phenotype_file_sets(dbgap_files)
+        self.assertIsInstance(file_sets, list)
+        self.assertEqual(len(file_sets), 2)
+
 
 if __name__ == '__main__':
     unittest.main()
