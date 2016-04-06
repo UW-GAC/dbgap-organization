@@ -592,6 +592,25 @@ class GetPhenotypeFileSetsTestCase(DbgapDirectoryStructureTestCase):
         self.assertIsInstance(file_sets, list)
         self.assertEqual(len(file_sets), 2)
 
+class MakeSymlinksTestCase(TempdirTestCase):
+
+    def setUp(self):
+        # call superclass constructor
+        super(MakeSymlinksTestCase, self).setUp()
+        # make a file
+        self.basename = _get_test_dbgap_filename('phenotype')
+        self.full_path = os.path.join(self.tempdir, self.basename)
+        _touch(self.full_path)
+        self.dbgap_file = DbgapFile(self.full_path)
+        # make a subdirectory
+        self.subdir = fake.word()
+        os.mkdir(os.path.join(self.tempdir, self.subdir))
+
+
+    def test_working(self):
+        os.chdir(os.path.join(self.tempdir, self.subdir))
+        organize_dbgap._make_symlink(self.dbgap_file)
+        self.assertTrue(os.path.exists(self.basename))
 
 if __name__ == '__main__':
     unittest.main()
