@@ -59,7 +59,7 @@ def _get_test_dbgap_filename(file_type, **kwargs):
     if file_type == 'phenotype':
         ps = kwargs.get('ps', fake.pyint())
         consent_group = kwargs.get('consent', fake.pyint())
-        consent_code = fake.word()
+        consent_code = kwargs.get('consent_code', fake.word())
         end = '.p{ps}.c{c}.{base}.{code}.txt'.format(ps=ps, c=consent_group, base=base, code=consent_code)
     elif file_type == 'var_report':
         ps = kwargs.get('ps', fake.pyint())
