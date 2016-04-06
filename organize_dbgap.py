@@ -90,65 +90,31 @@ def _check_diffs(dbgap_file_subset):
             raise ValueError('files are expect to be the same but are different: {file_a}, {file_b}'.format(file_a=filename_a, file_b=filename_b))
 
 
-def _get_var_report_match(dbgap_files, dbgap_file_to_match, check_diffs=True):
+def _get_file_match(dbgap_files, dbgap_file_to_match, match_type, check_diffs=True):
     """For a given DbgapFile, find the matcing var_report DbgapFile.
     
     Arguments:
     
     dbgap_files: list of DbgapFile objects returned from get_file_list
-    dbgap_file_to_match: single DbgapFile object for which to find the matching var_report file
+    dbgap_file_to_match: single DbgapFile object for which to find the matching file
+    match_type: type of file to match (typically data_dict or var_report)
     
     Optional arguments:
     check_diffs: if True, check that all matching var_report files are the same.
     
-    Files are matched based on file_type (to identify var_reports) and the
+    Files are matched based on file_type (to match match_type) and the
     dgap_id capture group from the regular expressions used to classify files.
     dbgap_id is the prefix of each file (ie phs??????.v?.pht??????.v?).
     
     Returns:
     
-    the DbgapFile var_report object that has the same dbgap_id as the dbgap_file_to_match.
+    the DbgapFile object that has the same dbgap_id as the dbgap_file_to_match and correct file_type.
     """
     dbgap_id_to_match = dbgap_file_to_match.match.groupdict()['dbgap_id']
 
     matches = []
     for f in dbgap_files:
-        if f.file_type == 'var_report':
-            if f.match.groupdict()['dbgap_id'] == dbgap_id_to_match:
-                matches.append(f)
-
-    # need to diff the files here to make sure they are the same
-    if check_diffs:
-        _check_diffs(matches)
-        
-    # return the first
-    return matches[0]
-
-
-def _get_data_dict_match(dbgap_files, dbgap_file_to_match, check_diffs=True):
-    """For a given DbgapFile, find the matcing data_dict DbgapFile.
-    
-    Arguments:
-    
-    dbgap_files: list of DbgapFile objects returned from get_file_list
-    dbgap_file_to_match: single DbgapFile object for which to find the matching var_report file
-    
-    Optional arguments:
-    check_diffs: if True, check that all matching data_dict files are the same.
-    
-    Files are matched based on file_type (to identify data_dict) and the
-    dgap_id capture group from the regular expressions used to classify files.
-    dbgap_id is the prefix of each file (ie phs??????.v?.pht??????.v?).
-    
-    Returns:
-    
-    the DbgapFile var_report object that has the same dbgap_id as the dbgap_file_to_match.
-    """
-    dbgap_id_to_match = dbgap_file_to_match.match.groupdict()['dbgap_id']
-
-    matches = []
-    for f in dbgap_files:
-        if f.file_type == 'data_dict':
+        if f.file_type == match_type:
             if f.match.groupdict()['dbgap_id'] == dbgap_id_to_match:
                 matches.append(f)
 
@@ -157,7 +123,11 @@ def _get_data_dict_match(dbgap_files, dbgap_file_to_match, check_diffs=True):
         _check_diffs(matches)
     
     # return the first
-    return matches[0]
+    try:
+        return matches[0]
+    except IndexError:
+        return None
+
 
 
 def _get_special_file_set(dbgap_files, pattern='Subject'):
@@ -186,8 +156,8 @@ def _get_special_file_set(dbgap_files, pattern='Subject'):
     # make sure they are all the same
     
     # get the var_report and data_dictionary to go with the subject file
-    var_report = _get_var_report_match(dbgap_files, special_files[0])
-    data_dict = _get_data_dict_match(dbgap_files, special_files[0])
+    var_report = _get_file_match(dbgap_files, special_files[0], 'var_report')
+    data_dict = _get_file_match(dbgap_files, special_files[0], 'data_dict')
     
     # return the whole set
     file_set = {'data_files': [special_files[0]],
@@ -223,8 +193,8 @@ def _get_phenotype_file_sets(dbgap_files):
     for dbgap_id in dbgap_ids:
         
         matching_files = [f for f in phenotype_files if f.match.groupdict()['dbgap_id'] == dbgap_id]
-        var_report = _get_var_report_match(dbgap_files, matching_files[0])
-        data_dict = _get_data_dict_match(dbgap_files, matching_files[0])
+        var_report = _get_file_match(dbgap_files, matching_files[0], 'var_report')
+        data_dict = _get_file_match(dbgap_files, matching_files[0], 'data_dict')
         this_set = {'data_files': matching_files,
                     'var_report': var_report,
                     'data_dict': data_dict
