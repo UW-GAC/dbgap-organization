@@ -621,5 +621,22 @@ class MakeSymlinkTestCase(TempdirTestCase):
             organize_dbgap._make_symlink(self.dbgap_file)
 
 
+class MakeSymlinkSetTestCase(DbgapDirectoryStructureTestCase):
+
+    def test_working(self):
+        # generate a set of phenotype files
+        self._make_file_set('subject')
+        dbgap_files = organize_dbgap.get_file_list(self.tempdir)
+        #print(os.getcwd())
+        file_set = organize_dbgap._get_special_file_set(dbgap_files)
+        subdir = os.path.join(self.tempdir, fake.word())
+        os.mkdir(subdir)
+        os.chdir(subdir)
+        organize_dbgap._make_symlink_set(file_set)
+        self.assertTrue(os.path.exists(file_set['var_report'].full_path))
+        self.assertTrue(os.path.exists(file_set['data_dict'].full_path))
+        for x in file_set['data_files']:
+            self.assertTrue(os.path.exists(x.full_path))
+
 if __name__ == '__main__':
     unittest.main()
