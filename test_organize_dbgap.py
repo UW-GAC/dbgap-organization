@@ -669,5 +669,26 @@ class MakeSymlinksTestCase(DbgapDirectoryStructureTestCase):
         self.assertTrue(os.path.exists('organized/Phenotypes/'+pheno_set[0]['data_files'][0].basename))
         self.assertTrue(os.path.exists('organized/Phenotypes/'+pheno_set[1]['data_files'][0].basename))
 
+class UncompressTestCase(TempdirTestCase):
+
+    def test_working_with_gzipped_txt_file(self):
+        # make a file and compress it
+        filename = os.path.join(self.tempdir, fake.file_name(extension="txt"))
+        _touch(filename)
+        cmd = 'gzip {file}'.format(file=filename)
+        subprocess.check_call(cmd, shell=True)
+        organize_dbgap.uncompress(self.tempdir)
+        self.assertTrue(os.path.exists(filename))
+        self.assertFalse(os.path.exists(filename + ".gz"))
+
+    def test_non_txt_gzipped_file_still_compressed(self):
+        filename = os.path.join(self.tempdir, fake.file_name(extension="png"))
+        _touch(filename)
+        cmd = 'gzip {file}'.format(file=filename)
+        subprocess.check_call(cmd, shell=True)
+        organize_dbgap.uncompress(self.tempdir)
+        self.assertTrue(os.path.exists(filename + ".gz"))
+        self.assertFalse(os.path.exists(filename))
+
 if __name__ == '__main__':
     unittest.main()
