@@ -19,6 +19,73 @@ fake = Factory.create()
 def _touch(filename):
     subprocess.check_call('touch {file}'.format(file=filename), shell=True)
 
+
+
+def _get_test_dbgap_filename(file_type, **kwargs):
+    phs = kwargs.get('phs', fake.pyint())
+    phs_v = kwargs.get('phs_v', fake.pyint())
+    pht = kwargs.get('pht', fake.pyint())
+    pht_v = kwargs.get('pht_v', fake.pyint())
+    base = kwargs.get('base', fake.word())
+
+    beginning = 'phs{phs:06d}.v{phs_v}.pht{pht:06d}.v{pht_v}'.format(phs=phs, phs_v=phs_v, pht=pht, pht_v=pht_v)
+
+    if file_type == 'phenotype':
+        ps = kwargs.get('ps', fake.pyint())
+        consent_group = kwargs.get('consent', fake.pyint())
+        consent_code = fake.word()
+        end = '.p{ps}.c{c}.{base}.{code}.txt'.format(ps=ps, c=consent_group, base=base, code=consent_code)
+    elif file_type == 'var_report':
+        ps = kwargs.get('ps', fake.pyint())
+        end = '.p{ps}.{base}.var_report.xml'.format(base=base, ps=ps)
+    elif file_type == 'data_dict':
+        end = '.{base}.data_dict.xml'.format(base=base)
+    elif file_type == 'subject':
+        ps = kwargs.get('ps', fake.pyint())
+        end = '.p{ps}.Subject.MULTI.txt'.format(ps=ps)
+    elif file_type == 'sample':
+        ps = kwargs.get('ps', fake.pyint())
+        end = '.p{ps}.Sample.MULTI.txt'.format(ps=ps)
+    elif file_type == 'pedigree':
+        ps = kwargs.get('ps', fake.pyint())
+        end = '.p{ps}.Pedigree.MULTI.txt'.format(ps=ps)
+    else:
+        raise ValueError('file_type does not match allowed types')
+    return beginning + end
+
+class GetTestDbgapFilenameTestCase(unittest.TestCase):
+    """Tests for the helper function _get_test_dbgap_filename"""
+
+    def test_phenotype(self):
+        filename = _get_test_dbgap_filename('phenotype')
+        dbgap_file = DbgapFile(filename, check_exists=False)
+        self.assertEqual(dbgap_file.file_type, 'phenotype')
+
+    def test_var_report(self):
+        filename = _get_test_dbgap_filename('var_report')
+        dbgap_file = DbgapFile(filename, check_exists=False)
+        self.assertEqual(dbgap_file.file_type, 'var_report')
+
+    def test_data_dict(self):
+        filename = _get_test_dbgap_filename('data_dict')
+        dbgap_file = DbgapFile(filename, check_exists=False)
+        self.assertEqual(dbgap_file.file_type, 'data_dict')
+
+    def test_subject(self):
+        filename = _get_test_dbgap_filename('subject')
+        dbgap_file = DbgapFile(filename, check_exists=False)
+        self.assertEqual(dbgap_file.file_type, 'special')
+
+    def test_pedigree(self):
+        filename = _get_test_dbgap_filename('pedigree')
+        dbgap_file = DbgapFile(filename, check_exists=False)
+        self.assertEqual(dbgap_file.file_type, 'special')
+
+    def test_sample(self):
+        filename = _get_test_dbgap_filename('sample')
+        dbgap_file = DbgapFile(filename, check_exists=False)
+        self.assertEqual(dbgap_file.file_type, 'special')
+
 class TempdirTestCase(unittest.TestCase):
 
     def setUp(self):
