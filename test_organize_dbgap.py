@@ -318,7 +318,7 @@ class GetFileMatchTestCase(TempdirTestCase):
         files = [xml_file, other_file, file_to_match]
         self.assertEqual(organize_dbgap._get_file_match(files, file_to_match, 'data_dict', check_diffs=False), xml_file)
 
-    def test_returns_none_if_no_match_with_different_file_type(self):
+    def test_raise_exception_if_no_match_with_different_file_type(self):
         """does it return None if there are no matches?"""
         phs = 7
         pht_to_match = 1
@@ -333,7 +333,8 @@ class GetFileMatchTestCase(TempdirTestCase):
         other_file = DbgapFile(filename, check_exists=False)
 
         files = [xml_file, other_file, file_to_match]
-        self.assertIsNone(organize_dbgap._get_file_match(files, file_to_match, 'var_report', check_diffs=False))
+        with self.assertRaises(IndexError):
+            organize_dbgap._get_file_match(files, file_to_match, 'var_report', check_diffs=False)
 
     def test_working_with_multiple_matches_returns_one(self):
         """does it return only one file if multiple matches are found?"""

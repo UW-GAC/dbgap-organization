@@ -123,10 +123,7 @@ def _get_file_match(dbgap_files, dbgap_file_to_match, match_type, check_diffs=Tr
         _check_diffs(matches)
     
     # return the first
-    try:
-        return matches[0]
-    except IndexError:
-        return None
+    return matches[0]
 
 
 
