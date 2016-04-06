@@ -612,5 +612,11 @@ class MakeSymlinksTestCase(TempdirTestCase):
         organize_dbgap._make_symlink(self.dbgap_file)
         self.assertTrue(os.path.exists(self.basename))
 
+    def test_exception_if_path_does_not_exist(self):
+        os.remove(self.dbgap_file.full_path)
+        with self.assertRaises(FileNotFoundError):
+            organize_dbgap._make_symlink(self.dbgap_file)
+
+
 if __name__ == '__main__':
     unittest.main()
