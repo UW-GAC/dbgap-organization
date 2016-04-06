@@ -596,7 +596,7 @@ class MakeSymlinkTestCase(TempdirTestCase):
 
     def setUp(self):
         # call superclass constructor
-        super(MakeSymlinksTestCase, self).setUp()
+        super(MakeSymlinkTestCase, self).setUp()
         # make a file
         self.basename = _get_test_dbgap_filename('phenotype')
         self.full_path = os.path.join(self.tempdir, self.basename)
