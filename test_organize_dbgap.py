@@ -232,8 +232,56 @@ class CheckDiffsTestCase(TempdirTestCase):
         with self.assertRaises(ValueError):
             organize_dbgap._check_diffs(dbgap_files)
 
+class GetFileMatchTestCase(unittest.TestCase):
+    # does not need a tempdir, since we don't need the files to actually exist
 
+    def test_working_data_dict(self):
+        phs = 7
+        pht_to_match = 1
+        other_pht = 2
+        # make a set of matching files
+        filename = _get_test_dbgap_filename('data_dict', phs=phs, phs_v=1, pht=pht_to_match, pht_v=1)
+        xml_file = DbgapFile(filename, check_exists=False)
+        filename = _get_test_dbgap_filename('phenotype', phs=phs, phs_v=1, pht=pht_to_match, pht_v=1)
+        file_to_match = DbgapFile(filename, check_exists=False)
+        # make a file that doesn't match
+        filename = _get_test_dbgap_filename('data_dict', phs=phs, phs_v=1, pht_v=1)
+        other_file = DbgapFile(filename, check_exists=False)
 
+        files = [xml_file, other_file, file_to_match]
+        self.assertEqual(organize_dbgap._get_file_match(files, file_to_match, 'data_dict', check_diffs=False), xml_file)
+
+    def test_working_var_report(self):
+        phs = 7
+        pht_to_match = 1
+        other_pht = 2
+        # make a set of matching files
+        filename = _get_test_dbgap_filename('data_dict', phs=phs, phs_v=1, pht=pht_to_match, pht_v=1)
+        xml_file = DbgapFile(filename, check_exists=False)
+        filename = _get_test_dbgap_filename('phenotype', phs=phs, phs_v=1, pht=pht_to_match, pht_v=1)
+        file_to_match = DbgapFile(filename, check_exists=False)
+        # make a file that doesn't match
+        filename = _get_test_dbgap_filename('data_dict', phs=phs, phs_v=1, pht_v=1)
+        other_file = DbgapFile(filename, check_exists=False)
+
+        files = [xml_file, other_file, file_to_match]
+        self.assertEqual(organize_dbgap._get_file_match(files, file_to_match, 'data_dict', check_diffs=False), xml_file)
+
+    def test_returns_none_if_no_match_with_different_file_type(self):
+        phs = 7
+        pht_to_match = 1
+        other_pht = 2
+        # make a set of matching files
+        filename = _get_test_dbgap_filename('data_dict', phs=phs, phs_v=1, pht=pht_to_match, pht_v=1)
+        xml_file = DbgapFile(filename, check_exists=False)
+        filename = _get_test_dbgap_filename('phenotype', phs=phs, phs_v=1, pht=pht_to_match, pht_v=1)
+        file_to_match = DbgapFile(filename, check_exists=False)
+        # make a file that doesn't match
+        filename = _get_test_dbgap_filename('data_dict', phs=phs, phs_v=1, pht_v=1)
+        other_file = DbgapFile(filename, check_exists=False)
+
+        files = [xml_file, other_file, file_to_match]
+        self.assertIsNone(organize_dbgap._get_file_match(files, file_to_match, 'var_report', check_diffs=False))
 
 
 if __name__ == '__main__':
