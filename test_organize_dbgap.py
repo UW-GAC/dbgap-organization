@@ -123,9 +123,13 @@ class TempdirTestCase(unittest.TestCase):
     """Superclass to hold setUp and tearDown methods for TestCases that need temporary directories"""
     def setUp(self):
         self.tempdir = tempfile.mkdtemp()
+        # get original directory in case we chdir in a test function
+        self.original_directory = os.getcwd()
 
     def tearDown(self):
         shutil.rmtree(self.tempdir)
+        # change back to original directory
+        os.chdir(self.original_directory)
 
 
 class TestDbgapFile(TempdirTestCase):
@@ -489,9 +493,8 @@ class DbgapDirectoryStructureTestCase(TempdirTestCase):
         self.consent_code1 = fake.word()
         self.consent_code2 = fake.word()
 
-
     def tearDown(self):
-        # call superclass constructor
+        # call superclass constructor - should delete temp dir
         super(DbgapDirectoryStructureTestCase, self).tearDown()
 
 
