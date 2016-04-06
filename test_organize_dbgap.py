@@ -16,9 +16,9 @@ from organize_dbgap import dbgap_re_dict
 
 fake = Factory.create()
 
-def _touch(filename):
-    subprocess.check_call('touch {file}'.format(file=filename), shell=True)
-
+def _touch(filename, text=""):
+    with open(filename, 'w') as f:
+        f.write(text)
 
 
 def _get_test_dbgap_filename(file_type, **kwargs):
