@@ -562,5 +562,25 @@ class GetSpecialFileSetTestCase(DbgapDirectoryStructureTestCase):
         with self.assertRaises(Exception):
             organize_dbgap._get_special_file_set(dbgap_files, pattern='Pedigree')
 
+class GetPhenotypeFileSetsTestCase(DbgapDirectoryStructureTestCase):
+
+    def test_working_with_one_phenotype_file_set(self):
+        self._make_file_set('phenotype')
+        dbgap_files = organize_dbgap.get_file_list(self.tempdir)
+        file_sets = organize_dbgap._get_phenotype_file_sets(dbgap_files)
+        self.assertIsInstance(file_sets, list)
+        self.assertEqual(len(file_sets), 1)
+        file_set = file_sets[0]
+        self.assertIsInstance(file_set['var_report'], DbgapFile)
+        self.assertIsInstance(file_set['var_report'], DbgapFile)
+        self.assertIsInstance(file_set['data_files'], list)
+        self.assertEqual(len(file_set['data_files']), 2) # 2 consent groups
+        # checking files
+        self.assertTrue(file_set['var_report'].full_path in [self.var_report1.full_path, self.var_report2.full_path])
+        self.assertTrue(file_set['data_dict'].full_path in [self.dd1.full_path, self.dd2.full_path])
+        self.assertTrue(file_set['data_files'][0].full_path in [self.data_file1.full_path, self.data_file2.full_path])
+        self.assertTrue(file_set['data_files'][1].full_path in [self.data_file1.full_path, self.data_file2.full_path])
+
+
 if __name__ == '__main__':
     unittest.main()
