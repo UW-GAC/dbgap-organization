@@ -505,7 +505,11 @@ class GetSpecialFileSetTestCase(DbgapDirectoryStructureTestCase):
         self.assertIsInstance(file_set['var_report'], DbgapFile)
         self.assertIsInstance(file_set['var_report'], DbgapFile)
         self.assertIsInstance(file_set['data_files'], list)
+        self.assertEqual(len(file_set['data_files']), 1)
+        # checking files
         self.assertTrue(file_set['var_report'].full_path in [self.var_report1.full_path, self.var_report2.full_path])
+        self.assertTrue(file_set['data_dict'].full_path in [self.dd1.full_path, self.dd2.full_path])
+        self.assertTrue(file_set['data_files'][0].full_path in [self.data_file1.full_path, self.data_file2.full_path])
 
 
 if __name__ == '__main__':
