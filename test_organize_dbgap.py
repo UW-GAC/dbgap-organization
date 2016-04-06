@@ -690,5 +690,24 @@ class UncompressTestCase(TempdirTestCase):
         self.assertTrue(os.path.exists(filename + ".gz"))
         self.assertFalse(os.path.exists(filename))
 
+    def test_working_with_tar_gz(self):
+        os.chdir(self.tempdir)
+        file1 = fake.file_name(extension="txt")
+        _touch(file1)
+        file2 = fake.file_name(extension="txt")
+        _touch(file2)
+        # tar them
+        tarfile = fake.file_name(extension='tar.gz')
+        cmd = 'tar -czf {tarfile} {file1} {file2}'.format(tarfile=tarfile, file1=file1, file2=file2)
+        subprocess.check_call(cmd, shell=True)
+        # remove original files
+        os.remove(file1)
+        os.remove(file2)
+        organize_dbgap.uncompress(self.tempdir)
+        self.assertTrue(os.path.exists(file1))
+        self.assertTrue(os.path.exists(file2))
+        self.assertFalse(os.path.exists(tarfile))
+    
+
 if __name__ == '__main__':
     unittest.main()
