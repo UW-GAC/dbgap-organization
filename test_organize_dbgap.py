@@ -661,6 +661,13 @@ class MakeSymlinksTestCase(DbgapDirectoryStructureTestCase):
         self.assertTrue(os.path.exists("organized"))
         self.assertTrue(os.path.exists("organized/Phenotypes"))
         self.assertTrue(os.path.exists("organized/Subject"))
+        # make sure files are in the right place
+        # we only need to check one of the data files, because _make_symlink_set was already tested
+        self.assertTrue(os.path.exists('organized/Subject/'+subject_set['data_files'][0].basename))
+        self.assertTrue(os.path.exists('organized/Subject/'+sample_set['data_files'][0].basename))
+        self.assertTrue(os.path.exists('organized/Subject/'+pedigree_set['data_files'][0].basename))
+        self.assertTrue(os.path.exists('organized/Phenotypes/'+pheno_set[0]['data_files'][0].basename))
+        self.assertTrue(os.path.exists('organized/Phenotypes/'+pheno_set[1]['data_files'][0].basename))
 
 if __name__ == '__main__':
     unittest.main()
