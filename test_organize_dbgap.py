@@ -592,7 +592,7 @@ class GetPhenotypeFileSetsTestCase(DbgapDirectoryStructureTestCase):
         self.assertIsInstance(file_sets, list)
         self.assertEqual(len(file_sets), 2)
 
-class MakeSymlinksTestCase(TempdirTestCase):
+class MakeSymlinkTestCase(TempdirTestCase):
 
     def setUp(self):
         # call superclass constructor
