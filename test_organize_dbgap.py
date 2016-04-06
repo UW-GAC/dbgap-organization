@@ -283,6 +283,28 @@ class GetFileMatchTestCase(TempdirTestCase):
         files = [xml_file, other_file, file_to_match]
         self.assertIsNone(organize_dbgap._get_file_match(files, file_to_match, 'var_report', check_diffs=False))
 
+    def test_working_with_multiple_matches_returns_one(self):
+        # make two directories, one for each consent group
+        dir1 = os.path.join(self.tempdir, 'dir1')
+        dir2 = os.path.join(self.tempdir, 'dir2')
+
+        phs = 7
+        pht = 1
+
+        # make a set of matching dd files
+        base_dd_filename = _get_test_dbgap_filename('data_dict', phs=phs, phs_v=1, pht=pht, pht_v=1)
+        filename_dd1 = os.path.join(dir1, base_dd_filename)
+        dd1 = DbgapFile(filename_dd1, check_exists=False)
+        filename_dd2 = os.path.join(dir2, base_dd_filename)
+        dd2 = DbgapFile(filename_dd2, check_exists=False)
+
+        # make the file to match
+        filename_to_match = _get_test_dbgap_filename('phenotype', phs=phs, phs_v=1, pht=pht, pht_v=1)
+        phenotype = DbgapFile(filename_to_match, check_exists=False)
+
+        files = [dd1, phenotype, dd2]
+        self.assertEqual(organize_dbgap._get_file_match(files, phenotype, 'data_dict', check_diffs=False), dd1)
+
     def test_working_with_check_diffs_no_diff(self):
         
         # make two directories, one for each consent group
