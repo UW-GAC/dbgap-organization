@@ -638,5 +638,29 @@ class MakeSymlinkSetTestCase(DbgapDirectoryStructureTestCase):
         for x in file_set['data_files']:
             self.assertTrue(os.path.exists(x.full_path))
 
+class MakeSymlinksTestCase(DbgapDirectoryStructureTestCase):
+
+    def test_working(self):
+        # generate a set of all files
+        self._make_file_set('phenotype')
+        self._make_file_set('phenotype')
+        self._make_file_set('subject')
+        self._make_file_set('sample')
+        self._make_file_set('pedigree')
+        # get file sets
+        dbgap_files = organize_dbgap.get_file_list(self.tempdir)
+        subject_set = organize_dbgap._get_special_file_set(dbgap_files, pattern="Subject")
+        pedigree_set = organize_dbgap._get_special_file_set(dbgap_files, pattern="Pedigree")
+        sample_set = organize_dbgap._get_special_file_set(dbgap_files, pattern="Sample")
+        pheno_set = organize_dbgap._get_phenotype_file_sets(dbgap_files)
+        # make a subdir
+        subdir = os.path.join(self.tempdir, fake.word())
+        os.mkdir(subdir)
+        os.chdir(subdir)
+        organize_dbgap._make_symlinks(subject_set, pedigree_set, sample_set, pheno_set)
+        self.assertTrue(os.path.exists("organized"))
+        self.assertTrue(os.path.exists("organized/Phenotypes"))
+        self.assertTrue(os.path.exists("organized/Subject"))
+
 if __name__ == '__main__':
     unittest.main()
