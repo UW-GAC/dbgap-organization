@@ -542,5 +542,25 @@ class GetSpecialFileSetTestCase(DbgapDirectoryStructureTestCase):
         self.assertTrue(file_set['data_dict'].full_path in [self.dd1.full_path, self.dd2.full_path])
         self.assertTrue(file_set['data_files'][0].full_path in [self.data_file1.full_path, self.data_file2.full_path])
 
+    def test_exception_without_matching_data_dict(self):
+        self._make_file_set('phenotype')
+        self._make_file_set('pedigree')
+        # remove both of the matching data dictionaries
+        os.remove(self.dd1.full_path)
+        os.remove(self.dd2.full_path)
+        dbgap_files = organize_dbgap.get_file_list(self.tempdir)
+        with self.assertRaises(Exception):
+            organize_dbgap._get_special_file_set(dbgap_files, pattern='Pedigree')
+
+    def test_exception_without_matching_var_report(self):
+        self._make_file_set('phenotype')
+        self._make_file_set('pedigree')
+        # remove both of the matching data dictionaries
+        os.remove(self.var_report1.full_path)
+        os.remove(self.var_report2.full_path)
+        dbgap_files = organize_dbgap.get_file_list(self.tempdir)
+        with self.assertRaises(Exception):
+            organize_dbgap._get_special_file_set(dbgap_files, pattern='Pedigree')
+
 if __name__ == '__main__':
     unittest.main()
