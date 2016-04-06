@@ -263,7 +263,7 @@ def _make_symlinks(subject_file_set, pedigree_file_set, sample_file_set, phenoty
     for phenotype_file_set in tmp:
         _make_symlink_set(phenotype_file_set)
         
-    os.chdir("..")
+    os.chdir("../..")
 
 
 def decrypt(directory, decrypt_path='/projects/resources/software/apps/sratoolkit/vdb-decrypt'):
