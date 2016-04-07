@@ -458,19 +458,16 @@ if __name__ == '__main__':
     organized_directory = os.path.join(output_directory, "organized")
     
     # do the decryption
-    print("decrypting files...", end="")
+    print("decrypting files...")
     decrypt(directory)
-    print(' done!')
     
-    print("copying files...", end="")
+    print("copying files...")
     # copy files to the final "raw" directory
     copy_files(directory, raw_directory)
-    print(' done!')
     
-    print("uncompressing files...", end="")
+    print("uncompressing files...")
     #output_directory = "/projects/topmed/downloaded_data/dbGaP/test/phs000007/v27"
     uncompress(raw_directory)
-    print(' done!')
     
     # organize files into symlinks
     print("organizing files into sets and making symlinks...", end="\n\n")
