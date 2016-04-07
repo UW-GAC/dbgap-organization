@@ -656,18 +656,18 @@ class MakeSymlinksTestCase(DbgapDirectoryStructureTestCase):
         # make a subdir
         subdir = os.path.join(self.tempdir, fake.word())
         os.mkdir(subdir)
+        organize_dbgap._make_symlinks(subdir, subject_set, pedigree_set, sample_set, pheno_set)
+        # test that directories and files were created properly
         os.chdir(subdir)
-        organize_dbgap._make_symlinks(subject_set, pedigree_set, sample_set, pheno_set)
-        self.assertTrue(os.path.exists("organized"))
-        self.assertTrue(os.path.exists("organized/Phenotypes"))
-        self.assertTrue(os.path.exists("organized/Subject"))
+        self.assertTrue(os.path.exists(os.path.join(subdir, "Phenotypes")))
+        self.assertTrue(os.path.exists(os.path.join(subdir, "Subject")))
         # make sure files are in the right place
         # we only need to check one of the data files, because _make_symlink_set was already tested
-        self.assertTrue(os.path.exists('organized/Subject/'+subject_set['data_files'][0].basename))
-        self.assertTrue(os.path.exists('organized/Subject/'+sample_set['data_files'][0].basename))
-        self.assertTrue(os.path.exists('organized/Subject/'+pedigree_set['data_files'][0].basename))
-        self.assertTrue(os.path.exists('organized/Phenotypes/'+pheno_set[0]['data_files'][0].basename))
-        self.assertTrue(os.path.exists('organized/Phenotypes/'+pheno_set[1]['data_files'][0].basename))
+        self.assertTrue(os.path.exists('Subject/'+subject_set['data_files'][0].basename))
+        self.assertTrue(os.path.exists('Subject/'+sample_set['data_files'][0].basename))
+        self.assertTrue(os.path.exists('Subject/'+pedigree_set['data_files'][0].basename))
+        self.assertTrue(os.path.exists('Phenotypes/'+pheno_set[0]['data_files'][0].basename))
+        self.assertTrue(os.path.exists('Phenotypes/'+pheno_set[1]['data_files'][0].basename))
 
 class UncompressTestCase(TempdirTestCase):
 

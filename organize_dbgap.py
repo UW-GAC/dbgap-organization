@@ -235,12 +235,14 @@ def _make_symlink_set(file_set):
     _make_symlink(file_set['data_dict'])
 
 
-def _make_symlinks(subject_file_set, pedigree_file_set, sample_file_set, phenotype_file_sets, nfiles=None):
+def _make_symlinks(organized_directory, subject_file_set, pedigree_file_set, sample_file_set, phenotype_file_sets, nfiles=None):
     """Function to generate symlinks for a set of dbgap files.
     """
-    if not os.path.exists("organized"):
-        os.makedirs("organized")
-    os.chdir("organized")
+    orig_directory = os.getcwd()
+    
+    if not os.path.exists(organized_directory):
+        os.makedirs(organized_directory)
+    os.chdir(organized_directory)
 
     # special files first
     if not os.path.exists("Subjects"):
@@ -263,7 +265,7 @@ def _make_symlinks(subject_file_set, pedigree_file_set, sample_file_set, phenoty
     for phenotype_file_set in tmp:
         _make_symlink_set(phenotype_file_set)
         
-    os.chdir("../..")
+    os.chdir(orig_directory)
 
 
 def decrypt(directory, decrypt_path='/projects/resources/software/apps/sratoolkit/vdb-decrypt'):
@@ -286,7 +288,7 @@ def decrypt(directory, decrypt_path='/projects/resources/software/apps/sratoolki
     os.chdir(original_directory)
 
 
-def organize(directory, link=False, nfiles=None):
+def organize(raw_directory, organized_directory, link=False, nfiles=None):
     """Organize dbgap files by type and make symlinks
     
     Positional arguments
@@ -296,9 +298,9 @@ def organize(directory, link=False, nfiles=None):
     link: boolean indicator whether to make symlinks or not
     nfiles: integer argument to limit number of symlinks created (for testing purposes)
     """
-    os.chdir(directory)
+    os.chdir(raw_directory)
     
-    dbgap_files = get_file_list("raw")
+    dbgap_files = get_file_list(raw_directory)
     
     # find the special file sets
     subject_file_set = _get_special_file_set(dbgap_files, pattern="Subject")
@@ -310,7 +312,7 @@ def organize(directory, link=False, nfiles=None):
     
     # if requested, generate the symlinks in the 'organized' subdirectory
     if link:
-        _make_symlinks(subject_file_set, pedigree_file_set, sample_file_set, phenotype_file_sets, nfiles=nfiles)
+        _make_symlinks(organized_directory, subject_file_set, pedigree_file_set, sample_file_set, phenotype_file_sets, nfiles=nfiles)
     
     # report files without matches
     unsorted_files = [f for f in dbgap_files if f.file_type is None]
