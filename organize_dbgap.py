@@ -220,6 +220,8 @@ def _check_symlink(symlink_path):
     True if the symlink is valid
     False if the symlink is broken or doesn't exist
     """
+    if not os.path.lexists(symlink_path):
+        raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), symlink_path)
     return os.path.exists(symlink_path)
 
     

@@ -648,6 +648,11 @@ class CheckSymlinkTestCase(TempdirTestCase):
         os.remove(filename)
         self.assertFalse(organize_dbgap._check_symlink(symlink_name))
 
+    def test_exception_if_symlink_path_doesnt_exist(self):
+        filename = fake.file_name()
+        with self.assertRaises(FileNotFoundError):
+            organize_dbgap._check_symlink(filename)
+
 class MakeSymlinkTestCase(TempdirTestCase):
     """Tests for _make_symlink"""
 
