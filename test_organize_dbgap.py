@@ -707,7 +707,30 @@ class UncompressTestCase(TempdirTestCase):
         self.assertTrue(os.path.exists(file1))
         self.assertTrue(os.path.exists(file2))
         self.assertFalse(os.path.exists(tarfile))
-    
+
+    def test_recursive(self):
+        os.chdir(self.tempdir)
+        file1 = fake.file_name(extension="txt")
+        _touch(file1)
+        file2 = fake.file_name(extension='txt')
+        _touch(file2)
+        # zip one of them
+        cmd = 'gzip {file}'.format(file=file1)
+        subprocess.check_call(cmd, shell=True)
+        # inside a tar file
+        tarfile = fake.file_name(extension='tar.gz')
+        cmd = 'tar -czf {tarfile} {file1} {file2}'.format(tarfile=tarfile, file1=file1+'.gz', file2=file2)
+        subprocess.check_call(cmd, shell=True)
+        # remove original file
+        os.remove(file1 + ".gz")
+        os.remove(file2)
+        # uncompress
+        organize_dbgap.uncompress(self.tempdir)
+        print(os.listdir(self.tempdir))
+        self.assertTrue(os.path.exists(file1))
+        self.assertTrue(os.path.exists(file2))
+        self.assertFalse(os.path.exists(tarfile))
+
 
 if __name__ == '__main__':
     unittest.main()

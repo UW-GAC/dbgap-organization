@@ -381,6 +381,7 @@ def uncompress(directory):
     """Uncompress a directory by walking the directory tree. Currently not guaranteed
     to be recursive, i.e. does not uncompress a file that was previously in a tar archive.
     """
+    rerun = False
     # may need to be called recursively
     # walk through the directory and find anything that needs to be uncompressed
     for root, dirs, files in os.walk(directory):
@@ -392,11 +393,15 @@ def uncompress(directory):
                 subprocess.check_call(cmd, shell=True)
                 # we don't want to save the tar archive
                 os.remove(name)
+                rerun = True
             if name.endswith(".txt.gz"):
                 abspath = os.path.join(root, name)
                 cmd = 'gunzip {file}'.format(file=abspath)
                 subprocess.check_call(cmd, shell=True)
     
+    if rerun:
+        # recursion!
+        uncompress(directory)
 
 if __name__ == '__main__':
     """Main function:
