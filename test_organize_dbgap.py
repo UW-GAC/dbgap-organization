@@ -572,6 +572,15 @@ class GetSpecialFileSetTestCase(DbgapDirectoryStructureTestCase):
         with self.assertRaises(Exception):
             organize_dbgap._get_special_file_set(dbgap_files, pattern='Pedigree')
 
+    def test_exception_if_special_files_are_different(self):
+        self._make_file_set('phenotype')
+        self._make_file_set('subject')
+        dbgap_files = organize_dbgap.get_file_list(self.tempdir)
+        # change one of the files to have different text
+        _touch(self.data_file1.full_path, text=fake.text())
+        with self.assertRaises(ValueError):
+            organize_dbgap._get_special_file_set(dbgap_files, pattern='Subject')
+
 class GetPhenotypeFileSetsTestCase(DbgapDirectoryStructureTestCase):
     """Tests for _get_phenotype_file_set function"""
 
