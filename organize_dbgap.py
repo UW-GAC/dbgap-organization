@@ -7,7 +7,7 @@ import re # regular expressions
 from argparse import ArgumentParser
 import subprocess # for system commands - in this case, only diff
 from pprint import pprint
-
+import errno
 
 # regular expression matchers for various kinds of dbgap files
 dbgap_re_dict = {'data_dict': r'^(?P<dbgap_id>phs\d{6}\.v\d+?\.pht\d{6}\.v\d+?)\.(?P<base>.+?)\.data_dict(?P<extra>\w{0,}?)\.xml$',
@@ -23,7 +23,7 @@ dbgap_re_dict = {'data_dict': r'^(?P<dbgap_id>phs\d{6}\.v\d+?\.pht\d{6}\.v\d+?)\
 class DbgapFile(object):
     """Class to hold information about files downloaded from dbgap.
     """
-    def __init__(self, file_path):
+    def __init__(self, file_path, check_exists=True):
         """Constructor function for DbgapFile instances.
         
         Arguments:
@@ -31,19 +31,25 @@ class DbgapFile(object):
         file_path: full path to a file downloaded from dbgap
         """
         self.full_path = os.path.abspath(file_path)
+        
+        if check_exists and not os.path.exists(self.full_path):
+            raise FileNotFoundError(self.full_path + " does not exist")
+
         self.basename = os.path.basename(file_path)
         
         # these will be set in the set_file_type class method
-        self.file_type = None # possibilities are 'phenotype', 'var_report', 'data_dict'
+        self.file_type = None # will store the file type
         self.match = None # will store the regular expression re.match object
 
-
+        # auto-set the file type
+        self._set_file_type() # possibilities are 'phenotype', 'var_report', 'data_dict'
+        
     def __str__(self):
         """string method for DbgapFile objects"""
         return self.full_path
     
     
-    def set_file_type(self, re_dict=dbgap_re_dict):
+    def _set_file_type(self, re_dict=dbgap_re_dict):
         """Function to set the file_type of a DbgapFile object, based on regular expression patterns"""
         
         for key, value in re_dict.items():
@@ -63,7 +69,6 @@ def get_file_list(directory):
             full_path = os.path.join(root, name)
             
             dbgap_file = DbgapFile(full_path)
-            dbgap_file.set_file_type()
             
             file_list.append(dbgap_file)
     
@@ -79,70 +84,37 @@ def _check_diffs(dbgap_file_subset):
     for i in range(1, len(dbgap_file_subset)):
         filename_b = dbgap_file_subset[i].full_path
         cmd = 'diff {file1} {file2}'.format(file1=filename_a, file2=filename_b)
-        out = subprocess.check_output(cmd, shell=True)
-        if len(out) > 0:
+        try:
+            out = subprocess.check_output(cmd, shell=True)
+        except subprocess.CalledProcessError:
             raise ValueError('files are expect to be the same but are different: {file_a}, {file_b}'.format(file_a=filename_a, file_b=filename_b))
 
 
-def _get_var_report_match(dbgap_files, dbgap_file_to_match, check_diffs=True):
+def _get_file_match(dbgap_files, dbgap_file_to_match, match_type, check_diffs=True):
     """For a given DbgapFile, find the matcing var_report DbgapFile.
     
     Arguments:
     
     dbgap_files: list of DbgapFile objects returned from get_file_list
-    dbgap_file_to_match: single DbgapFile object for which to find the matching var_report file
+    dbgap_file_to_match: single DbgapFile object for which to find the matching file
+    match_type: type of file to match (typically data_dict or var_report)
     
     Optional arguments:
     check_diffs: if True, check that all matching var_report files are the same.
     
-    Files are matched based on file_type (to identify var_reports) and the
+    Files are matched based on file_type (to match match_type) and the
     dgap_id capture group from the regular expressions used to classify files.
     dbgap_id is the prefix of each file (ie phs??????.v?.pht??????.v?).
     
     Returns:
     
-    the DbgapFile var_report object that has the same dbgap_id as the dbgap_file_to_match.
+    the DbgapFile object that has the same dbgap_id as the dbgap_file_to_match and correct file_type.
     """
     dbgap_id_to_match = dbgap_file_to_match.match.groupdict()['dbgap_id']
 
     matches = []
     for f in dbgap_files:
-        if f.file_type == 'var_report':
-            if f.match.groupdict()['dbgap_id'] == dbgap_id_to_match:
-                matches.append(f)
-
-    # need to diff the files here to make sure they are the same
-    if check_diffs:
-        _check_diffs(matches)
-        
-    # return the first
-    return matches[0]
-
-
-def _get_data_dict_match(dbgap_files, dbgap_file_to_match, check_diffs=True):
-    """For a given DbgapFile, find the matcing data_dict DbgapFile.
-    
-    Arguments:
-    
-    dbgap_files: list of DbgapFile objects returned from get_file_list
-    dbgap_file_to_match: single DbgapFile object for which to find the matching var_report file
-    
-    Optional arguments:
-    check_diffs: if True, check that all matching data_dict files are the same.
-    
-    Files are matched based on file_type (to identify data_dict) and the
-    dgap_id capture group from the regular expressions used to classify files.
-    dbgap_id is the prefix of each file (ie phs??????.v?.pht??????.v?).
-    
-    Returns:
-    
-    the DbgapFile var_report object that has the same dbgap_id as the dbgap_file_to_match.
-    """
-    dbgap_id_to_match = dbgap_file_to_match.match.groupdict()['dbgap_id']
-
-    matches = []
-    for f in dbgap_files:
-        if f.file_type == 'data_dict':
+        if f.file_type == match_type:
             if f.match.groupdict()['dbgap_id'] == dbgap_id_to_match:
                 matches.append(f)
 
@@ -152,6 +124,7 @@ def _get_data_dict_match(dbgap_files, dbgap_file_to_match, check_diffs=True):
     
     # return the first
     return matches[0]
+
 
 
 def _get_special_file_set(dbgap_files, pattern='Subject'):
@@ -180,8 +153,8 @@ def _get_special_file_set(dbgap_files, pattern='Subject'):
     # make sure they are all the same
     
     # get the var_report and data_dictionary to go with the subject file
-    var_report = _get_var_report_match(dbgap_files, special_files[0])
-    data_dict = _get_data_dict_match(dbgap_files, special_files[0])
+    var_report = _get_file_match(dbgap_files, special_files[0], 'var_report')
+    data_dict = _get_file_match(dbgap_files, special_files[0], 'data_dict')
     
     # return the whole set
     file_set = {'data_files': [special_files[0]],
@@ -217,8 +190,8 @@ def _get_phenotype_file_sets(dbgap_files):
     for dbgap_id in dbgap_ids:
         
         matching_files = [f for f in phenotype_files if f.match.groupdict()['dbgap_id'] == dbgap_id]
-        var_report = _get_var_report_match(dbgap_files, matching_files[0])
-        data_dict = _get_data_dict_match(dbgap_files, matching_files[0])
+        var_report = _get_file_match(dbgap_files, matching_files[0], 'var_report')
+        data_dict = _get_file_match(dbgap_files, matching_files[0], 'data_dict')
         this_set = {'data_files': matching_files,
                     'var_report': var_report,
                     'data_dict': data_dict
@@ -235,9 +208,9 @@ def _make_symlink(dbgap_file):
     
     dbgap_file: a DbgapFile object whose path will be used to make a symlink
     """
-    print(dbgap_file.full_path)
     path = os.path.relpath(dbgap_file.full_path)
-    assert(os.path.exists(path))
+    if not os.path.exists(path):
+        raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), path)
     os.symlink(path, dbgap_file.basename)
 
 
@@ -262,17 +235,19 @@ def _make_symlink_set(file_set):
     _make_symlink(file_set['data_dict'])
 
 
-def _make_symlinks(subject_file_set, pedigree_file_set, sample_file_set, phenotype_file_sets, nfiles=None):
+def _make_symlinks(organized_directory, subject_file_set, pedigree_file_set, sample_file_set, phenotype_file_sets, nfiles=None):
     """Function to generate symlinks for a set of dbgap files.
     """
-    if not os.path.exists("organized"):
-        os.makedirs("organized")
-    os.chdir("organized")
+    orig_directory = os.getcwd()
+    
+    if not os.path.exists(organized_directory):
+        os.mkdir(organized_directory)
+    os.chdir(organized_directory)
 
     # special files first
     if not os.path.exists("Subjects"):
-        os.makedirs("Subjects")
-    os.chdir("Subjects")
+        os.mkdir("Subject")
+    os.chdir("Subject")
 
     _make_symlink_set(subject_file_set)
     _make_symlink_set(sample_file_set)
@@ -282,7 +257,7 @@ def _make_symlinks(subject_file_set, pedigree_file_set, sample_file_set, phenoty
 
     # phenotype files
     if not os.path.exists("Phenotypes"):
-        os.makedirs("Phenotypes")
+        os.mkdir("Phenotypes")
     os.chdir("Phenotypes")
     
     # make phenotype file symlinks
@@ -290,7 +265,7 @@ def _make_symlinks(subject_file_set, pedigree_file_set, sample_file_set, phenoty
     for phenotype_file_set in tmp:
         _make_symlink_set(phenotype_file_set)
         
-    os.chdir("..")
+    os.chdir(orig_directory)
 
 
 def decrypt(directory, decrypt_path='/projects/resources/software/apps/sratoolkit/vdb-decrypt'):
@@ -313,7 +288,7 @@ def decrypt(directory, decrypt_path='/projects/resources/software/apps/sratoolki
     os.chdir(original_directory)
 
 
-def organize(directory, link=False, nfiles=None):
+def organize(raw_directory, organized_directory, link=False, nfiles=None):
     """Organize dbgap files by type and make symlinks
     
     Positional arguments
@@ -323,9 +298,9 @@ def organize(directory, link=False, nfiles=None):
     link: boolean indicator whether to make symlinks or not
     nfiles: integer argument to limit number of symlinks created (for testing purposes)
     """
-    os.chdir(directory)
+    os.chdir(raw_directory)
     
-    dbgap_files = get_file_list("raw")
+    dbgap_files = get_file_list(raw_directory)
     
     # find the special file sets
     subject_file_set = _get_special_file_set(dbgap_files, pattern="Subject")
@@ -337,7 +312,7 @@ def organize(directory, link=False, nfiles=None):
     
     # if requested, generate the symlinks in the 'organized' subdirectory
     if link:
-        _make_symlinks(subject_file_set, pedigree_file_set, sample_file_set, phenotype_file_sets, nfiles=nfiles)
+        _make_symlinks(organized_directory, subject_file_set, pedigree_file_set, sample_file_set, phenotype_file_sets, nfiles=nfiles)
     
     # report files without matches
     unsorted_files = [f for f in dbgap_files if f.file_type is None]
@@ -408,6 +383,7 @@ def uncompress(directory):
     """Uncompress a directory by walking the directory tree. Currently not guaranteed
     to be recursive, i.e. does not uncompress a file that was previously in a tar archive.
     """
+    rerun = False
     # may need to be called recursively
     # walk through the directory and find anything that needs to be uncompressed
     for root, dirs, files in os.walk(directory):
@@ -415,13 +391,19 @@ def uncompress(directory):
             # tar file
             if name.endswith(".tar.gz"):
                 abspath = os.path.join(root, name)
-                cmd = 'tar -xvfz {file}'.format(file=abspath)
+                cmd = 'tar -xzf {file} -C {directory}'.format(file=abspath, directory=root)
                 subprocess.check_call(cmd, shell=True)
+                # we don't want to save the tar archive
+                os.remove(abspath)
+                rerun = True
             if name.endswith(".txt.gz"):
                 abspath = os.path.join(root, name)
                 cmd = 'gunzip {file}'.format(file=abspath)
                 subprocess.check_call(cmd, shell=True)
     
+    if rerun:
+        # recursion!
+        uncompress(directory)
 
 if __name__ == '__main__':
     """Main function:
@@ -447,14 +429,17 @@ if __name__ == '__main__':
     
     output_directory = create_final_directory(phs_dict['phs'], phs_dict['v'])
     
+    raw_directory = os.path.join(output_directory, "raw")
+    organized_directory = os.path.join(output_directory, "organized")
+    
     # do the decryption
     decrypt(directory)
     
     # copy files to the final "raw" directory
-    copy_files(directory, os.path.join(output_directory, "raw"))
+    copy_files(directory, raw_directory)
     
     #output_directory = "/projects/topmed/downloaded_data/dbGaP/test/phs000007/v27"
-    uncompress(output_directory)
+    uncompress(raw_directory)
     
     # organize files into symlinks
-    organize(output_directory, link=True)
+    organize(raw_directory, organized_directory, link=True)

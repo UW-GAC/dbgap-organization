@@ -1,0 +1,13 @@
+[run]
+source =
+    .
+    
+omit = 
+  */__init__.py
+  */test*.py
+
+[report]
+exclude_lines = 
+    print
+    if __name__ == '__main__':
+    def decrypt
