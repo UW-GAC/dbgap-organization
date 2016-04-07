@@ -312,7 +312,7 @@ def decrypt(directory, decrypt_path='/projects/resources/software/apps/sratoolki
     # need to be in the dbgap workspace directory to actually do the decryption
     os.chdir(directory)
     # system call to the decrypt binary
-    subprocess.check_call('{vdb} .'.format(vdb=decrypt_path), shell=True)
+    subprocess.check_call('{vdb} -q .'.format(vdb=decrypt_path), shell=True)
     os.chdir(original_directory)
 
 
@@ -364,7 +364,6 @@ def parse_input_directory(directory):
     if directory.endswith("/"):
         directory = directory[:-1]
     basename = os.path.basename(directory)
-    print(basename)
     regex = re.compile(r'(?P<phs>phs\d{6})\.(?P<v>v\d+)$')
     match = regex.match(basename)
     if match is not None:
@@ -403,8 +402,6 @@ def create_final_directory(phs, version, default_path="/projects/topmed/download
 
 def copy_files(from_path, to_path):
     
-    print("from: ", from_path)
-    print("to:   ", to_path)
     shutil.copytree(from_path, to_path)
 
 def uncompress(directory):
@@ -461,13 +458,18 @@ if __name__ == '__main__':
     organized_directory = os.path.join(output_directory, "organized")
     
     # do the decryption
+    print("decrypting files...")
     decrypt(directory)
     
+    print("copying files...")
     # copy files to the final "raw" directory
     copy_files(directory, raw_directory)
     
+    print("uncompressing files...")
     #output_directory = "/projects/topmed/downloaded_data/dbGaP/test/phs000007/v27"
     uncompress(raw_directory)
     
     # organize files into symlinks
+    print("organizing files into sets and making symlinks...", end="\n\n")
     organize(raw_directory, organized_directory, link=True)
+    print('\ndone!')
