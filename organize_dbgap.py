@@ -473,6 +473,6 @@ if __name__ == '__main__':
     print(' done!')
     
     # organize files into symlinks
-    print("organizing files into sets and making symlinks...", end="")
+    print("organizing files into sets and making symlinks...", end="\n\n")
     organize(raw_directory, organized_directory, link=True)
-    print(' done!')
+    print('\ndone!')
