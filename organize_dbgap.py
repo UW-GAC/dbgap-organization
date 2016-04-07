@@ -364,7 +364,6 @@ def parse_input_directory(directory):
     if directory.endswith("/"):
         directory = directory[:-1]
     basename = os.path.basename(directory)
-    print(basename)
     regex = re.compile(r'(?P<phs>phs\d{6})\.(?P<v>v\d+)$')
     match = regex.match(basename)
     if match is not None:
