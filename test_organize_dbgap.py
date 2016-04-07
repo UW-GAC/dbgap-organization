@@ -770,6 +770,16 @@ class CreateFinalDirectoryTestCase(TempdirTestCase):
         self.assertTrue(os.path.exists(os.path.join(self.tempdir, self.phs)))
         self.assertTrue(os.path.exists(os.path.join(self.tempdir, self.phs, self.version)))
 
+    def test_working_if_phs_exists_but_version_does_not(self):
+        os.mkdir(os.path.join(self.tempdir, self.phs))
+        organize_dbgap.create_final_directory(self.phs, self.version, default_path=self.tempdir)
+        self.assertTrue(os.path.exists(os.path.join(self.tempdir, self.phs, self.version)))
+
+    def test_exception_raised_if_phs_and_version_exist(self):
+        os.mkdir(os.path.join(self.tempdir, self.phs))
+        os.mkdir(os.path.join(self.tempdir, self.phs, self.version))
+        with self.assertRaises(FileExistsError):
+            organize_dbgap.create_final_directory(self.phs, self.version, default_path=self.tempdir)
 
 if __name__ == '__main__':
     unittest.main()
