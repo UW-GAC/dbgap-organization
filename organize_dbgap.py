@@ -389,7 +389,7 @@ def uncompress(directory):
             # tar file
             if name.endswith(".tar.gz"):
                 abspath = os.path.join(root, name)
-                cmd = 'tar -xvzf {file} -C {directory}'.format(file=abspath, directory=root)
+                cmd = 'tar -xzf {file} -C {directory}'.format(file=abspath, directory=root)
                 subprocess.check_call(cmd, shell=True)
                 # we don't want to save the tar archive
                 os.remove(abspath)
