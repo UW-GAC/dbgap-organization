@@ -403,8 +403,6 @@ def create_final_directory(phs, version, default_path="/projects/topmed/download
 
 def copy_files(from_path, to_path):
     
-    print("from: ", from_path)
-    print("to:   ", to_path)
     shutil.copytree(from_path, to_path)
 
 def uncompress(directory):
