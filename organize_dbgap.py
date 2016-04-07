@@ -312,7 +312,7 @@ def decrypt(directory, decrypt_path='/projects/resources/software/apps/sratoolki
     # need to be in the dbgap workspace directory to actually do the decryption
     os.chdir(directory)
     # system call to the decrypt binary
-    subprocess.check_call('{vdb} .'.format(vdb=decrypt_path), shell=True)
+    subprocess.check_call('{vdb} -q .'.format(vdb=decrypt_path), shell=True)
     os.chdir(original_directory)
 
 
