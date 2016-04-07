@@ -627,6 +627,27 @@ class GetPhenotypeFileSetsTestCase(DbgapDirectoryStructureTestCase):
             organize_dbgap._get_phenotype_file_sets(dbgap_files)
 
 
+class CheckSymlinkTestCase(TempdirTestCase):
+    """tests for _check_symlink"""
+
+    def test_working(self):
+        os.chdir(self.tempdir)
+        filename = fake.file_name()
+        _touch(os.path.join(self.tempdir, filename))
+        symlink_name = fake.file_name()
+        os.symlink(filename, symlink_name)
+        self.assertTrue(organize_dbgap._check_symlink(symlink_name))
+
+    def test_exception_if_broken_symlink(self):
+        os.chdir(self.tempdir)
+        filename = fake.file_name()
+        _touch(os.path.join(self.tempdir, filename))
+        symlink_name = fake.file_name()
+        os.symlink(filename, symlink_name)
+        # remove the original file so the symlink breaks
+        os.remove(filename)
+        self.assertFalse(organize_dbgap._check_symlink(symlink_name))
+
 class MakeSymlinkTestCase(TempdirTestCase):
     """Tests for _make_symlink"""
 

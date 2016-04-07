@@ -209,7 +209,10 @@ def _get_phenotype_file_sets(dbgap_files):
             raise ValueError(msg)
 
     return phenotype_file_sets
-    
+
+def _check_symlink(symlink_path):
+    return os.path.exists(symlink_path)
+
     
 def _make_symlink(dbgap_file):
     """Make (relative path) symlinks to a DbgapFile object's path in the current directory.
