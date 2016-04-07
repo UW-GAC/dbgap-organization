@@ -235,7 +235,11 @@ def _make_symlink(dbgap_file):
     path = os.path.relpath(dbgap_file.full_path)
     if not os.path.exists(path):
         raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), path)
+
     os.symlink(path, dbgap_file.basename)
+    
+    if not _check_symlink(dbgap_file.basename):
+        raise FileNotFoundError(errno.ENOENT, os.strerr(errno.ENOENT), dbgap_file.basename)
 
 
 def _make_symlink_set(file_set):
