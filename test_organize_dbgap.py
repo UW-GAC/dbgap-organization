@@ -630,7 +630,7 @@ class GetPhenotypeFileSetsTestCase(DbgapDirectoryStructureTestCase):
 class CheckSymlinkTestCase(TempdirTestCase):
     """tests for _check_symlink"""
 
-    def test_working(self):
+    def test_true_if_working_symlink(self):
         os.chdir(self.tempdir)
         filename = fake.file_name()
         _touch(os.path.join(self.tempdir, filename))
@@ -638,7 +638,7 @@ class CheckSymlinkTestCase(TempdirTestCase):
         os.symlink(filename, symlink_name)
         self.assertTrue(organize_dbgap._check_symlink(symlink_name))
 
-    def test_exception_if_broken_symlink(self):
+    def test_false_if_broken_symlink(self):
         os.chdir(self.tempdir)
         filename = fake.file_name()
         _touch(os.path.join(self.tempdir, filename))
