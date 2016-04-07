@@ -211,6 +211,15 @@ def _get_phenotype_file_sets(dbgap_files):
     return phenotype_file_sets
 
 def _check_symlink(symlink_path):
+    """Test if symlink is broken
+
+    Positional arguments
+    symlink_path: path to the symlink to test
+
+    Returns
+    True if the symlink is valid
+    False if the symlink is broken or doesn't exist
+    """
     return os.path.exists(symlink_path)
 
     
