@@ -429,14 +429,17 @@ if __name__ == '__main__':
     
     output_directory = create_final_directory(phs_dict['phs'], phs_dict['v'])
     
+    raw_directory = os.path.join(output_directory, "raw")
+    organized_directory = os.path.join(output_directory, "organized")
+    
     # do the decryption
     decrypt(directory)
     
     # copy files to the final "raw" directory
-    copy_files(directory, os.path.join(output_directory, "raw"))
+    copy_files(directory, raw_directory)
     
     #output_directory = "/projects/topmed/downloaded_data/dbGaP/test/phs000007/v27"
-    uncompress(os.path.join(output_directory, "raw"))
+    uncompress(raw_directory)
     
     # organize files into symlinks
-    organize(os.path.join(output_directory, "raw"), os.path.join(output_directory, "organized"), link=True)
+    organize(raw_directory, organized_directory, link=True)
