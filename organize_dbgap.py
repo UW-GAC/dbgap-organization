@@ -209,7 +209,21 @@ def _get_phenotype_file_sets(dbgap_files):
             raise ValueError(msg)
 
     return phenotype_file_sets
-    
+
+def _check_symlink(symlink_path):
+    """Test if symlink is broken
+
+    Positional arguments
+    symlink_path: path to the symlink to test
+
+    Returns
+    True if the symlink is valid
+    False if the symlink is broken or doesn't exist
+    """
+    if not os.path.lexists(symlink_path):
+        raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), symlink_path)
+    return os.path.exists(symlink_path)
+
     
 def _make_symlink(dbgap_file):
     """Make (relative path) symlinks to a DbgapFile object's path in the current directory.
@@ -221,7 +235,11 @@ def _make_symlink(dbgap_file):
     path = os.path.relpath(dbgap_file.full_path)
     if not os.path.exists(path):
         raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), path)
+
     os.symlink(path, dbgap_file.basename)
+    
+    if not _check_symlink(dbgap_file.basename):
+        raise FileNotFoundError(errno.ENOENT, os.strerr(errno.ENOENT), dbgap_file.basename)
 
 
 def _make_symlink_set(file_set):
