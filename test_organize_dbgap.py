@@ -872,8 +872,9 @@ class OrganizeTestCase(DbgapDirectoryStructureTestCase):
         # move all the files to the raw directory, because it's required by the organize function
         organize_dbgap.organize(self.tempdir, self.organized_dir, link=True)
         self.assertTrue(os.path.exists(os.path.join(self.organized_dir, "Subject")))
+        self.assertNotEqual(os.listdir(os.path.join(self.organized_dir, "Subject")), 0)
         self.assertTrue(os.path.exists(os.path.join(self.organized_dir, "Phenotypes")))
-
+        self.assertNotEqual(os.listdir(os.path.join(self.organized_dir, "Phenotypes")), 0)
 
 class ParseInputDirectoryTestCase(unittest.TestCase):
 
