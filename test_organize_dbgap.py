@@ -877,8 +877,11 @@ class OrganizeTestCase(DbgapDirectoryStructureTestCase):
         self.assertNotEqual(os.listdir(os.path.join(self.organized_dir, "Phenotypes")), 0)
 
 class ParseInputDirectoryTestCase(unittest.TestCase):
+    """Tests for parse_input_directory. Note that it is impossible to test all non-matches
+    for the regex, so only a few specific cases are tested"""
 
     def test_working(self):
+        """test that a directory with the expected structure is appropriately parsed"""
         phs_string = 'phs{phs:06d}'.format(phs=fake.pyint())
         version_string = 'v{v}'.format(v=fake.pyint())
         input_directory = '.'.join([phs_string, version_string])
@@ -888,6 +891,8 @@ class ParseInputDirectoryTestCase(unittest.TestCase):
         self.assertEqual(result['v'], version_string)
 
     def test_working_with_abs_path(self):
+        """test that parse_input_directory works with an absolute path instead of
+        a relative path"""
         phs_string = 'phs{phs:06d}'.format(phs=fake.pyint())
         version_string = 'v{v}'.format(v=fake.pyint())
         input_directory = os.path.abspath('.'.join([phs_string, version_string]))
@@ -897,6 +902,7 @@ class ParseInputDirectoryTestCase(unittest.TestCase):
         self.assertEqual(result['v'], version_string)
 
     def test_working_with_trailing_slash(self):
+        """test that parse_input_directory works if the input directory has a trailing slash"""
         phs_string = 'phs{phs:06d}'.format(phs=fake.pyint())
         version_string = 'v{v}'.format(v=fake.pyint())
         input_directory = '.'.join([phs_string, version_string]) + "/"
@@ -906,6 +912,7 @@ class ParseInputDirectoryTestCase(unittest.TestCase):
         self.assertEqual(result['v'], version_string)
 
     def test_exception_if_wrong_format_phs(self):
+        """test that an exception is raised if the directory has the wrong phs format"""
         phs_string = 'phs{phs:05d}'.format(phs=fake.pyint())
         version_string = 'v{v}'.format(v=fake.pyint())
         input_directory = '.'.join([phs_string, version_string])
@@ -913,11 +920,13 @@ class ParseInputDirectoryTestCase(unittest.TestCase):
             organize_dbgap.parse_input_directory(input_directory)
 
     def test_exception_if_missing_version(self):
+        """test that an exception is raised if the directory is missing the version"""
         phs_string = 'phs{phs:05d}'.format(phs=fake.pyint())
         with self.assertRaises(ValueError):
             organize_dbgap.parse_input_directory(phs_string)
 
     def test_exception_wrong_join(self):
+        """test that an exception is raised if the phs and version are separated by the wrong character"""
         phs_string = 'phs{phs:05d}'.format(phs=fake.pyint())
         version_string = 'v{v}'.format(v=fake.pyint())
         input_directory = '-'.join([phs_string, version_string])
