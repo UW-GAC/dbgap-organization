@@ -436,7 +436,7 @@ if __name__ == '__main__':
     copy_files(directory, os.path.join(output_directory, "raw"))
     
     #output_directory = "/projects/topmed/downloaded_data/dbGaP/test/phs000007/v27"
-    uncompress(output_directory)
+    uncompress(os.path.join(output_directory, "raw"))
     
     # organize files into symlinks
-    organize(output_directory, link=True)
+    organize(os.path.join(output_directory, "raw"), os.path.join(output_directory, "organized"), link=True)
