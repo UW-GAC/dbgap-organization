@@ -671,15 +671,16 @@ class MakeSymlinksTestCase(DbgapDirectoryStructureTestCase):
 
 class UncompressTestCase(TempdirTestCase):
 
-    def test_working_with_gzipped_txt_file(self):
+    def test_working_with_gzipped_txt_file_in_different_directory(self):
         # make a file and compress it
         filename = os.path.join(self.tempdir, fake.file_name(extension="txt"))
         _touch(filename)
         cmd = 'gzip {file}'.format(file=filename)
         subprocess.check_call(cmd, shell=True)
+        os.chdir(self.original_directory)
         organize_dbgap.uncompress(self.tempdir)
-        self.assertTrue(os.path.exists(filename))
-        self.assertFalse(os.path.exists(filename + ".gz"))
+        self.assertTrue(os.path.exists(os.path.join(self.tempdir, filename)))
+        self.assertFalse(os.path.exists(os.path.join(self.tempdir, filename + ".gz")))
 
     def test_non_txt_gzipped_file_still_compressed(self):
         filename = os.path.join(self.tempdir, fake.file_name(extension="png"))
@@ -690,7 +691,7 @@ class UncompressTestCase(TempdirTestCase):
         self.assertTrue(os.path.exists(filename + ".gz"))
         self.assertFalse(os.path.exists(filename))
 
-    def test_working_with_tar_gz(self):
+    def test_working_with_tar_gz_in_different_directory(self):
         os.chdir(self.tempdir)
         file1 = fake.file_name(extension="txt")
         _touch(file1)
@@ -703,10 +704,11 @@ class UncompressTestCase(TempdirTestCase):
         # remove original files
         os.remove(file1)
         os.remove(file2)
+        os.chdir(self.original_directory)
         organize_dbgap.uncompress(self.tempdir)
-        self.assertTrue(os.path.exists(file1))
-        self.assertTrue(os.path.exists(file2))
-        self.assertFalse(os.path.exists(tarfile))
+        self.assertTrue(os.path.exists(os.path.join(self.tempdir, file1)))
+        self.assertTrue(os.path.exists(os.path.join(self.tempdir, file2)))
+        self.assertFalse(os.path.exists(os.path.join(self.tempdir, tarfile)))
 
     def test_recursive(self):
         os.chdir(self.tempdir)
@@ -724,12 +726,12 @@ class UncompressTestCase(TempdirTestCase):
         # remove original file
         os.remove(file1 + ".gz")
         os.remove(file2)
+        os.chdir(self.original_directory)
         # uncompress
         organize_dbgap.uncompress(self.tempdir)
-        print(os.listdir(self.tempdir))
-        self.assertTrue(os.path.exists(file1))
-        self.assertTrue(os.path.exists(file2))
-        self.assertFalse(os.path.exists(tarfile))
+        self.assertTrue(os.path.exists(os.path.join(self.tempdir, file1)))
+        self.assertTrue(os.path.exists(os.path.join(self.tempdir, file2)))
+        self.assertFalse(os.path.exists(os.path.join(self.tempdir, tarfile)))
 
 
 if __name__ == '__main__':
