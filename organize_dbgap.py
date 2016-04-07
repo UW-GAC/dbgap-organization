@@ -241,12 +241,12 @@ def _make_symlinks(organized_directory, subject_file_set, pedigree_file_set, sam
     orig_directory = os.getcwd()
     
     if not os.path.exists(organized_directory):
-        os.makedirs(organized_directory)
+        os.mkdir(organized_directory)
     os.chdir(organized_directory)
 
     # special files first
     if not os.path.exists("Subjects"):
-        os.makedirs("Subject")
+        os.mkdir("Subject")
     os.chdir("Subject")
 
     _make_symlink_set(subject_file_set)
@@ -257,7 +257,7 @@ def _make_symlinks(organized_directory, subject_file_set, pedigree_file_set, sam
 
     # phenotype files
     if not os.path.exists("Phenotypes"):
-        os.makedirs("Phenotypes")
+        os.mkdir("Phenotypes")
     os.chdir("Phenotypes")
     
     # make phenotype file symlinks
