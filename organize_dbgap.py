@@ -151,6 +151,7 @@ def _get_special_file_set(dbgap_files, pattern='Subject'):
     special_files = [f for f in dbgap_files if f.file_type == 'special' and pattern in f.basename]
     
     # make sure they are all the same
+    _check_diffs(special_files)
     
     # get the var_report and data_dictionary to go with the subject file
     var_report = _get_file_match(dbgap_files, special_files[0], 'var_report')
