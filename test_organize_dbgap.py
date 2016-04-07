@@ -710,6 +710,30 @@ class UncompressTestCase(TempdirTestCase):
         self.assertTrue(os.path.exists(os.path.join(self.tempdir, file2)))
         self.assertFalse(os.path.exists(os.path.join(self.tempdir, tarfile)))
 
+    def test_working_with_tar_gz_in_subfolder_from_different_directory(self):
+        os.chdir(self.tempdir)
+        # make a subdirectory - the tar file and original files will be in the subdirectory
+        subdir = fake.word()
+        os.mkdir(os.path.join(self.tempdir, subdir))
+        os.chdir(subdir)
+        file1 = fake.file_name(extension="txt")
+        _touch(file1)
+        file2 = fake.file_name(extension="txt")
+        _touch(file2)
+        # tar them
+        tarfile = fake.file_name(extension='tar.gz')
+        cmd = 'tar -czf {tarfile} {file1} {file2}'.format(tarfile=tarfile, file1=file1, file2=file2)
+        subprocess.check_call(cmd, shell=True)
+        # remove original files
+        os.remove(file1)
+        os.remove(file2)
+        os.chdir(self.original_directory)
+        organize_dbgap.uncompress(self.tempdir)
+        # make sure that the files are in the proper subdirectory after uncompress
+        self.assertTrue(os.path.exists(os.path.join(self.tempdir, subdir, file1)))
+        self.assertTrue(os.path.exists(os.path.join(self.tempdir, subdir, file2)))
+        self.assertFalse(os.path.exists(os.path.join(self.tempdir, subdir, tarfile)))
+
     def test_recursive(self):
         os.chdir(self.tempdir)
         file1 = fake.file_name(extension="txt")
