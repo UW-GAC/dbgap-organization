@@ -806,6 +806,35 @@ class CopyFilesTestCase(TempdirTestCase):
         os.mkdir(subdir2)
         with self.assertRaises(Exception):
             organize_dbgap.copy_files(subdir1, subdir2)
-        
+
+
+class OrganizeTestCase(DbgapDirectoryStructureTestCase):
+
+    def setUp(self):
+        # call superclass setUp function
+        super(OrganizeTestCase, self).setUp()
+        # create a second tempdir for the organization
+        self.organized_dir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        super(OrganizeTestCase, self).tearDown()
+        # also remove the temp organized directory
+        shutil.rmtree(self.organized_dir)
+
+    def test_working_phenotype(self):
+        self._make_file_set('phenotype')
+        pheno_file_check = self.data_file1
+        self._make_file_set('subject')
+        subject_file_check = self.data_file1
+        self._make_file_set('sample')
+        sample_file_check = self.data_file1
+        self._make_file_set('pedigree')
+        pedigree_file_check = self.data_file1
+        # move all the files to the raw directory, because it's required by the organize function
+        organize_dbgap.organize(self.tempdir, self.organized_dir, link=True)
+        self.assertTrue(os.path.exists(os.path.join(self.organized_dir, "Subject")))
+        self.assertTrue(os.path.exists(os.path.join(self.organized_dir, "Phenotypes")))
+
+
 if __name__ == '__main__':
     unittest.main()
