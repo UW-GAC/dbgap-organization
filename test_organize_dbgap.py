@@ -781,5 +781,31 @@ class CreateFinalDirectoryTestCase(TempdirTestCase):
         with self.assertRaises(FileExistsError):
             organize_dbgap.create_final_directory(self.phs, self.version, default_path=self.tempdir)
 
+class CopyFilesTestCase(TempdirTestCase):
+
+    def test_working(self):
+        os.chdir(self.tempdir)
+        subdir1 = fake.word()
+        os.mkdir(subdir1)
+        filename = fake.file_name()
+        _touch(os.path.join(subdir1, filename))
+        # second subdirectory to copy to, but don't create it; the copy_files function should
+        subdir2 = fake.word()
+        organize_dbgap.copy_files(subdir1, subdir2)
+        self.assertTrue(os.path.exists(os.path.join(subdir2, filename)))
+
+
+    def test_fails_if_to_path_already_exists(self):
+        os.chdir(self.tempdir)
+        subdir1 = fake.word()
+        os.mkdir(subdir1)
+        filename = fake.file_name()
+        _touch(os.path.join(subdir1, filename))
+        # second subdirectory to copy to, but don't create it; the copy_files function should
+        subdir2 = fake.word()
+        os.mkdir(subdir2)
+        with self.assertRaises(Exception):
+            organize_dbgap.copy_files(subdir1, subdir2)
+        
 if __name__ == '__main__':
     unittest.main()
