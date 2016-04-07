@@ -836,5 +836,53 @@ class OrganizeTestCase(DbgapDirectoryStructureTestCase):
         self.assertTrue(os.path.exists(os.path.join(self.organized_dir, "Phenotypes")))
 
 
+class ParseInputDirectoryTestCase(unittest.TestCase):
+
+    def test_working(self):
+        phs_string = 'phs{phs:06d}'.format(phs=fake.pyint())
+        version_string = 'v{v}'.format(v=fake.pyint())
+        input_directory = '.'.join([phs_string, version_string])
+        result = organize_dbgap.parse_input_directory(input_directory)
+        self.assertIsInstance(result, dict)
+        self.assertEqual(result['phs'], phs_string)
+        self.assertEqual(result['v'], version_string)
+
+    def test_working_with_abs_path(self):
+        phs_string = 'phs{phs:06d}'.format(phs=fake.pyint())
+        version_string = 'v{v}'.format(v=fake.pyint())
+        input_directory = os.path.abspath('.'.join([phs_string, version_string]))
+        result = organize_dbgap.parse_input_directory(input_directory)
+        self.assertIsInstance(result, dict)
+        self.assertEqual(result['phs'], phs_string)
+        self.assertEqual(result['v'], version_string)
+
+    def test_working_with_trailing_slash(self):
+        phs_string = 'phs{phs:06d}'.format(phs=fake.pyint())
+        version_string = 'v{v}'.format(v=fake.pyint())
+        input_directory = '.'.join([phs_string, version_string]) + "/"
+        result = organize_dbgap.parse_input_directory(input_directory)
+        self.assertIsInstance(result, dict)
+        self.assertEqual(result['phs'], phs_string)
+        self.assertEqual(result['v'], version_string)
+
+    def test_exception_if_wrong_format_phs(self):
+        phs_string = 'phs{phs:05d}'.format(phs=fake.pyint())
+        version_string = 'v{v}'.format(v=fake.pyint())
+        input_directory = '.'.join([phs_string, version_string])
+        with self.assertRaises(ValueError):
+            organize_dbgap.parse_input_directory(input_directory)
+
+    def test_exception_if_missing_version(self):
+        phs_string = 'phs{phs:05d}'.format(phs=fake.pyint())
+        with self.assertRaises(ValueError):
+            organize_dbgap.parse_input_directory(phs_string)
+
+    def test_exception_wrong_join(self):
+        phs_string = 'phs{phs:05d}'.format(phs=fake.pyint())
+        version_string = 'v{v}'.format(v=fake.pyint())
+        input_directory = '-'.join([phs_string, version_string])
+        with self.assertRaises(ValueError):
+            organize_dbgap.parse_input_directory(phs_string)
+
 if __name__ == '__main__':
     unittest.main()
