@@ -150,6 +150,9 @@ def _get_special_file_set(dbgap_files, pattern='Subject'):
     """
     special_files = [f for f in dbgap_files if f.file_type == 'special' and pattern in f.basename]
     
+    if len(special_files) == 0:
+        return None
+
     # make sure they are all the same
     _check_diffs(special_files)
     
@@ -279,7 +282,8 @@ def _make_symlinks(organized_directory, subject_file_set, pedigree_file_set, sam
 
     _make_symlink_set(subject_file_set)
     _make_symlink_set(sample_file_set)
-    _make_symlink_set(pedigree_file_set)
+    if pedigree_file_set is not None:
+        _make_symlink_set(pedigree_file_set)
     
     os.chdir("..")
 
@@ -332,8 +336,10 @@ def organize(raw_directory, organized_directory, link=False, nfiles=None):
     
     # find the special file sets
     subject_file_set = _get_special_file_set(dbgap_files, pattern="Subject")
-    pedigree_file_set = _get_special_file_set(dbgap_files, pattern="Pedigree")
+    assert(subject_file_set is not None)
     sample_file_set = _get_special_file_set(dbgap_files, pattern="Sample")
+    assert(sample_file_set is not None)
+    pedigree_file_set = _get_special_file_set(dbgap_files, pattern="Pedigree")
     
     # find the phenotype file sets
     phenotype_file_sets = _get_phenotype_file_sets(dbgap_files)
