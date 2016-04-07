@@ -760,12 +760,15 @@ class UncompressTestCase(TempdirTestCase):
 
 class CreateFinalDirectoryTestCase(TempdirTestCase):
 
+    def setUp(self):
+        super(CreateFinalDirectoryTestCase, self).setUp()
+        self.phs = 'phs{phs:06d}'.format(phs=fake.pyint())
+        self.version = 'v{v}'.format(v=fake.pyint())
+
     def test_working(self):
-        phs = 'phs{phs:06d}'.format(phs=fake.pyint())
-        version = 'v{v}'.format(v=fake.pyint())
-        organize_dbgap.create_final_directory(phs, version, default_path=self.tempdir)
-        self.assertTrue(os.path.exists(os.path.join(self.tempdir, phs)))
-        self.assertTrue(os.path.exists(os.path.join(self.tempdir, phs, version)))
+        organize_dbgap.create_final_directory(self.phs, self.version, default_path=self.tempdir)
+        self.assertTrue(os.path.exists(os.path.join(self.tempdir, self.phs)))
+        self.assertTrue(os.path.exists(os.path.join(self.tempdir, self.phs, self.version)))
 
 
 if __name__ == '__main__':
