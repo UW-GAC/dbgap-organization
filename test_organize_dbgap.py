@@ -614,6 +614,19 @@ class GetPhenotypeFileSetsTestCase(DbgapDirectoryStructureTestCase):
         self.assertIsInstance(file_sets, list)
         self.assertEqual(len(file_sets), 2)
 
+    def test_exception_raised_if_different_number_of_phenotype_files(self):
+        """test that there are the same number of phenotype data_files in each.
+        meant to catch the case where consent group 1 has (file1, file2) and
+        consent group 2 only has (file1)."""
+        self._make_file_set('phenotype')
+        self._make_file_set('phenotype')
+        # remove one of the consent groups' phenotype files
+        os.remove(self.data_file2.full_path)
+        dbgap_files = organize_dbgap.get_file_list(self.tempdir)
+        with self.assertRaises(ValueError):
+            organize_dbgap._get_phenotype_file_sets(dbgap_files)
+
+
 class MakeSymlinkTestCase(TempdirTestCase):
     """Tests for _make_symlink"""
 
