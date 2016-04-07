@@ -581,6 +581,12 @@ class GetSpecialFileSetTestCase(DbgapDirectoryStructureTestCase):
         with self.assertRaises(ValueError):
             organize_dbgap._get_special_file_set(dbgap_files, pattern='Subject')
 
+    def test_returns_none_if_pattern_does_not_exist(self):
+        self._make_file_set('phenotype')
+        dbgap_files = organize_dbgap.get_file_list(self.tempdir)
+        self.assertIsNone(organize_dbgap._get_special_file_set(dbgap_files, pattern='Subject'))
+
+
 class GetPhenotypeFileSetsTestCase(DbgapDirectoryStructureTestCase):
     """Tests for _get_phenotype_file_set function"""
 
