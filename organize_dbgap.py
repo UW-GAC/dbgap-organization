@@ -9,6 +9,8 @@ import subprocess # for system commands - in this case, only diff
 from pprint import pprint
 import errno
 
+__version__ = 1.0
+
 # regular expression matchers for various kinds of dbgap files
 dbgap_re_dict = {'data_dict': r'^(?P<dbgap_id>phs\d{6}\.v\d+?\.pht\d{6}\.v\d+?)\.(?P<base>.+?)\.data_dict(?P<extra>\w{0,}?)\.xml$',
            'phenotype': r'^(?P<dbgap_id>phs\d{6}\.v\d+?\.pht\d{6}\.v\d+?)\.p(\d+?)\.c(\d+?)\.(?P<base>.+?)\.(?P<consent_code>.+?)\.txt$',
@@ -150,7 +152,11 @@ def _get_special_file_set(dbgap_files, pattern='Subject'):
     """
     special_files = [f for f in dbgap_files if f.file_type == 'special' and pattern in f.basename]
     
+    if len(special_files) == 0:
+        return None
+
     # make sure they are all the same
+    _check_diffs(special_files)
     
     # get the var_report and data_dictionary to go with the subject file
     var_report = _get_file_match(dbgap_files, special_files[0], 'var_report')
@@ -198,8 +204,31 @@ def _get_phenotype_file_sets(dbgap_files):
                     }
         phenotype_file_sets.append(this_set)
     
+    # check that all phenotype file sets have the same length
+    n_phenotype_files = max([len(x['data_files']) for x in phenotype_file_sets])
+
+    for x in phenotype_file_sets:
+        if n_phenotype_files != len(x['data_files']):
+            filenames = [y.basename for y in x['data_files']]
+            msg = 'phenotype file set should have {n} data files but only has: {filenames}'.format(filenames=', '.join(filenames), n=n_phenotype_files)
+            raise ValueError(msg)
+
     return phenotype_file_sets
-    
+
+def _check_symlink(symlink_path):
+    """Test if symlink is broken
+
+    Positional arguments
+    symlink_path: path to the symlink to test
+
+    Returns
+    True if the symlink is valid
+    False if the symlink is broken or doesn't exist
+    """
+    if not os.path.lexists(symlink_path):
+        raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), symlink_path)
+    return os.path.exists(symlink_path)
+
     
 def _make_symlink(dbgap_file):
     """Make (relative path) symlinks to a DbgapFile object's path in the current directory.
@@ -211,7 +240,11 @@ def _make_symlink(dbgap_file):
     path = os.path.relpath(dbgap_file.full_path)
     if not os.path.exists(path):
         raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), path)
+
     os.symlink(path, dbgap_file.basename)
+    
+    if not _check_symlink(dbgap_file.basename):
+        raise FileNotFoundError(errno.ENOENT, os.strerr(errno.ENOENT), dbgap_file.basename)
 
 
 def _make_symlink_set(file_set):
@@ -251,7 +284,8 @@ def _make_symlinks(organized_directory, subject_file_set, pedigree_file_set, sam
 
     _make_symlink_set(subject_file_set)
     _make_symlink_set(sample_file_set)
-    _make_symlink_set(pedigree_file_set)
+    if pedigree_file_set is not None:
+        _make_symlink_set(pedigree_file_set)
     
     os.chdir("..")
 
@@ -284,7 +318,7 @@ def decrypt(directory, decrypt_path='/projects/resources/software/apps/sratoolki
     # need to be in the dbgap workspace directory to actually do the decryption
     os.chdir(directory)
     # system call to the decrypt binary
-    subprocess.check_call('{vdb} .'.format(vdb=decrypt_path), shell=True)
+    subprocess.check_call('{vdb} -q .'.format(vdb=decrypt_path), shell=True)
     os.chdir(original_directory)
 
 
@@ -304,8 +338,10 @@ def organize(raw_directory, organized_directory, link=False, nfiles=None):
     
     # find the special file sets
     subject_file_set = _get_special_file_set(dbgap_files, pattern="Subject")
-    pedigree_file_set = _get_special_file_set(dbgap_files, pattern="Pedigree")
+    assert(subject_file_set is not None)
     sample_file_set = _get_special_file_set(dbgap_files, pattern="Sample")
+    assert(sample_file_set is not None)
+    pedigree_file_set = _get_special_file_set(dbgap_files, pattern="Pedigree")
     
     # find the phenotype file sets
     phenotype_file_sets = _get_phenotype_file_sets(dbgap_files)
@@ -336,7 +372,6 @@ def parse_input_directory(directory):
     if directory.endswith("/"):
         directory = directory[:-1]
     basename = os.path.basename(directory)
-    print(basename)
     regex = re.compile(r'(?P<phs>phs\d{6})\.(?P<v>v\d+)$')
     match = regex.match(basename)
     if match is not None:
@@ -345,7 +380,7 @@ def parse_input_directory(directory):
         raise ValueError('{basename} does not match expected string phs??????.v*'.format(basename=basename))
 
 
-def create_final_directory(phs, version, default_path="/projects/topmed/downloaded_data/dbGaP/test/"):
+def create_final_directory(phs, version, default_path="/projects/topmed/downloaded_data/dbGaP"):
     """Creates final output directory for files
     
     Positional arguments:
@@ -375,8 +410,6 @@ def create_final_directory(phs, version, default_path="/projects/topmed/download
 
 def copy_files(from_path, to_path):
     
-    print("from: ", from_path)
-    print("to:   ", to_path)
     shutil.copytree(from_path, to_path)
 
 def uncompress(directory):
@@ -417,12 +450,14 @@ if __name__ == '__main__':
     
     Tasks bulleted with * are already being done; those bulleted with - still need to be written.
     """
-    parser = ArgumentParser()
+    print("{script}, version {version}".format(script=os.path.basename(sys.argv[0]), version=__version__))
     
+    parser = ArgumentParser()
+
     parser.add_argument("directory")
     
     args = parser.parse_args()
-    
+
     directory = os.path.abspath(args.directory)
     
     phs_dict = parse_input_directory(directory)
@@ -433,13 +468,18 @@ if __name__ == '__main__':
     organized_directory = os.path.join(output_directory, "organized")
     
     # do the decryption
+    print("decrypting files...")
     decrypt(directory)
     
+    print("copying files...")
     # copy files to the final "raw" directory
     copy_files(directory, raw_directory)
     
+    print("uncompressing files...")
     #output_directory = "/projects/topmed/downloaded_data/dbGaP/test/phs000007/v27"
     uncompress(raw_directory)
     
     # organize files into symlinks
+    print("organizing files into sets and making symlinks...", end="\n\n")
     organize(raw_directory, organized_directory, link=True)
+    print('\ndone!')

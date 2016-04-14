@@ -572,6 +572,21 @@ class GetSpecialFileSetTestCase(DbgapDirectoryStructureTestCase):
         with self.assertRaises(Exception):
             organize_dbgap._get_special_file_set(dbgap_files, pattern='Pedigree')
 
+    def test_exception_if_special_files_are_different(self):
+        self._make_file_set('phenotype')
+        self._make_file_set('subject')
+        dbgap_files = organize_dbgap.get_file_list(self.tempdir)
+        # change one of the files to have different text
+        _touch(self.data_file1.full_path, text=fake.text())
+        with self.assertRaises(ValueError):
+            organize_dbgap._get_special_file_set(dbgap_files, pattern='Subject')
+
+    def test_returns_none_if_pattern_does_not_exist(self):
+        self._make_file_set('phenotype')
+        dbgap_files = organize_dbgap.get_file_list(self.tempdir)
+        self.assertIsNone(organize_dbgap._get_special_file_set(dbgap_files, pattern='Subject'))
+
+
 class GetPhenotypeFileSetsTestCase(DbgapDirectoryStructureTestCase):
     """Tests for _get_phenotype_file_set function"""
 
@@ -604,6 +619,45 @@ class GetPhenotypeFileSetsTestCase(DbgapDirectoryStructureTestCase):
         file_sets = organize_dbgap._get_phenotype_file_sets(dbgap_files)
         self.assertIsInstance(file_sets, list)
         self.assertEqual(len(file_sets), 2)
+
+    def test_exception_raised_if_different_number_of_phenotype_files(self):
+        """test that there are the same number of phenotype data_files in each.
+        meant to catch the case where consent group 1 has (file1, file2) and
+        consent group 2 only has (file1)."""
+        self._make_file_set('phenotype')
+        self._make_file_set('phenotype')
+        # remove one of the consent groups' phenotype files
+        os.remove(self.data_file2.full_path)
+        dbgap_files = organize_dbgap.get_file_list(self.tempdir)
+        with self.assertRaises(ValueError):
+            organize_dbgap._get_phenotype_file_sets(dbgap_files)
+
+
+class CheckSymlinkTestCase(TempdirTestCase):
+    """tests for _check_symlink"""
+
+    def test_true_if_working_symlink(self):
+        os.chdir(self.tempdir)
+        filename = fake.file_name()
+        _touch(os.path.join(self.tempdir, filename))
+        symlink_name = fake.file_name()
+        os.symlink(filename, symlink_name)
+        self.assertTrue(organize_dbgap._check_symlink(symlink_name))
+
+    def test_false_if_broken_symlink(self):
+        os.chdir(self.tempdir)
+        filename = fake.file_name()
+        _touch(os.path.join(self.tempdir, filename))
+        symlink_name = fake.file_name()
+        os.symlink(filename, symlink_name)
+        # remove the original file so the symlink breaks
+        os.remove(filename)
+        self.assertFalse(organize_dbgap._check_symlink(symlink_name))
+
+    def test_exception_if_symlink_path_doesnt_exist(self):
+        filename = fake.file_name()
+        with self.assertRaises(FileNotFoundError):
+            organize_dbgap._check_symlink(filename)
 
 class MakeSymlinkTestCase(TempdirTestCase):
     """Tests for _make_symlink"""
