@@ -378,7 +378,7 @@ def parse_input_directory(directory):
         raise ValueError('{basename} does not match expected string phs??????.v*'.format(basename=basename))
 
 
-def create_final_directory(phs, version, default_path="/projects/topmed/downloaded_data/dbGaP/test/"):
+def create_final_directory(phs, version, default_path="/projects/topmed/downloaded_data/dbGaP"):
     """Creates final output directory for files
     
     Positional arguments:
