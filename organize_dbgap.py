@@ -9,6 +9,8 @@ import subprocess # for system commands - in this case, only diff
 from pprint import pprint
 import errno
 
+__version__ = 1.0
+
 # regular expression matchers for various kinds of dbgap files
 dbgap_re_dict = {'data_dict': r'^(?P<dbgap_id>phs\d{6}\.v\d+?\.pht\d{6}\.v\d+?)\.(?P<base>.+?)\.data_dict(?P<extra>\w{0,}?)\.xml$',
            'phenotype': r'^(?P<dbgap_id>phs\d{6}\.v\d+?\.pht\d{6}\.v\d+?)\.p(\d+?)\.c(\d+?)\.(?P<base>.+?)\.(?P<consent_code>.+?)\.txt$',
@@ -448,12 +450,14 @@ if __name__ == '__main__':
     
     Tasks bulleted with * are already being done; those bulleted with - still need to be written.
     """
-    parser = ArgumentParser()
+    print("{script}, version {version}".format(script=os.path.basename(sys.argv[0]), version=__version__))
     
+    parser = ArgumentParser()
+
     parser.add_argument("directory")
     
     args = parser.parse_args()
-    
+
     directory = os.path.abspath(args.directory)
     
     phs_dict = parse_input_directory(directory)
