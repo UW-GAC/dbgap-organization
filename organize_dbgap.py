@@ -447,8 +447,8 @@ def clean_up(directory):
             os.chmod(os.path.join(root, name), mode)
         for d in dirs:
             os.chmod(os.path.join(root, d), mode)
+
     # change permission on root itself
-    print(directory)
     os.chmod(directory, mode)
 
 
@@ -503,3 +503,4 @@ if __name__ == '__main__':
     clean_up(output_directory)
 
     print('done!')
+    print('final_directory: {dir}'.format(dir=output_directory))
