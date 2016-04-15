@@ -397,6 +397,10 @@ def create_final_directory(phs, version, out_path):
     Returns:
     full path to directory that was just created
     """
+    # check that the directory exists
+    if not os.path.exists(out_path):
+        raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), out_path)
+    
     # check that it does not already exist
     phs_directory = os.path.join(out_path, phs)
     if not os.path.exists(phs_directory):
