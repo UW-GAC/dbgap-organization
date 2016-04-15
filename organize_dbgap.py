@@ -478,7 +478,6 @@ if __name__ == '__main__':
     copy_files(directory, raw_directory)
     
     print("uncompressing files...")
-    #output_directory = "/projects/topmed/downloaded_data/dbGaP/test/phs000007/v27"
     uncompress(raw_directory)
     
     # organize files into symlinks
