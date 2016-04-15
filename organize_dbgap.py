@@ -380,7 +380,7 @@ def parse_input_directory(directory):
         raise ValueError('{basename} does not match expected string phs??????.v*'.format(basename=basename))
 
 
-def create_final_directory(phs, version, default_path="/projects/topmed/downloaded_data/dbGaP"):
+def create_final_directory(phs, version, out_path):
     """Creates final output directory for files
     
     Positional arguments:
@@ -395,7 +395,7 @@ def create_final_directory(phs, version, default_path="/projects/topmed/download
     full path to directory that was just created
     """
     # check that it does not already exist
-    phs_directory = os.path.join(default_path, phs)
+    phs_directory = os.path.join(out_path, phs)
     if not os.path.exists(phs_directory):
         os.mkdir(phs_directory)
     version_directory = os.path.join(phs_directory, version)
@@ -455,7 +455,7 @@ if __name__ == '__main__':
     parser = ArgumentParser()
 
     parser.add_argument("directory")
-    parser.add_argument("--outpath", "-o", default=None, type=str)
+    parser.add_argument("--outpath", "-o", default="/projects/topmed/downloaded_data/dbGaP/", type=str)
 
     args = parser.parse_args()
 
@@ -463,11 +463,8 @@ if __name__ == '__main__':
     
     phs_dict = parse_input_directory(directory)
     
-    if args.outpath is not None:
-        kwargs = {'default_path': os.path.abspath(args.outpath)}
-    else:
-        kwargs = {}
-    output_directory = create_final_directory(phs_dict['phs'], phs_dict['v'], **kwargs)
+    outpath = os.path.abspath(args.outpath)
+    output_directory = create_final_directory(phs_dict['phs'], phs_dict['v'], outpath)
     
     raw_directory = os.path.join(output_directory, "raw")
     organized_directory = os.path.join(output_directory, "organized")
