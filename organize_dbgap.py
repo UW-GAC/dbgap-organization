@@ -8,6 +8,7 @@ from argparse import ArgumentParser
 import subprocess # for system commands - in this case, only diff
 from pprint import pprint
 import errno
+from stat import S_IRUSR, S_IXUSR, S_IRGRP, S_IXGRP
 
 __version__ = 1.0
 
@@ -438,6 +439,19 @@ def uncompress(directory):
         # recursion!
         uncompress(directory)
 
+def clean_up(directory):
+    # set permissions to read- and execute-only by user and group (0550)
+    mode = S_IRUSR | S_IXUSR | S_IRGRP | S_IXGRP
+    for root, dirs, files in os.walk(directory):
+        for name in files:
+            os.chmod(os.path.join(root, name), mode)
+        for d in dirs:
+            os.chmod(os.path.join(root, d), mode)
+    # change permission on root itself
+    print(directory)
+    os.chmod(directory, mode)
+
+
 if __name__ == '__main__':
     """Main function:
     * decrypt dbgap files in download directory
@@ -483,4 +497,9 @@ if __name__ == '__main__':
     # organize files into symlinks
     print("organizing files into sets and making symlinks...", end="\n\n")
     organize(raw_directory, organized_directory, link=True)
-    print('\ndone!')
+
+    # write protect final directory
+    print("\nwrite protecting final directory")
+    clean_up(output_directory)
+
+    print('done!')
