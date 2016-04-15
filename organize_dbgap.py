@@ -455,14 +455,19 @@ if __name__ == '__main__':
     parser = ArgumentParser()
 
     parser.add_argument("directory")
-    
+    parser.add_argument("--outpath", "-o", default=None, type=str)
+
     args = parser.parse_args()
 
     directory = os.path.abspath(args.directory)
     
     phs_dict = parse_input_directory(directory)
     
-    output_directory = create_final_directory(phs_dict['phs'], phs_dict['v'])
+    if args.outpath is not None:
+        kwargs = {'default_path': os.path.abspath(args.outpath)}
+    else:
+        kwargs = {}
+    output_directory = create_final_directory(phs_dict['phs'], phs_dict['v'], **kwargs)
     
     raw_directory = os.path.join(output_directory, "raw")
     organized_directory = os.path.join(output_directory, "organized")
