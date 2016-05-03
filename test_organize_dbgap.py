@@ -847,7 +847,7 @@ class CreateFinalDirectoryTestCase(TempdirTestCase):
 
     def test_working(self):
         """test that create_final_directory_structure works with expected input"""
-        organize_dbgap.create_final_directory(self.phs, self.version, default_path=self.tempdir)
+        organize_dbgap.create_final_directory(self.phs, self.version, self.tempdir)
         self.assertTrue(os.path.exists(os.path.join(self.tempdir, self.phs)))
         self.assertTrue(os.path.exists(os.path.join(self.tempdir, self.phs, self.version)))
 
@@ -855,7 +855,7 @@ class CreateFinalDirectoryTestCase(TempdirTestCase):
         """test that create_final_directory_structure works with expected input, and if
         the phs directory already exists"""
         os.mkdir(os.path.join(self.tempdir, self.phs))
-        organize_dbgap.create_final_directory(self.phs, self.version, default_path=self.tempdir)
+        organize_dbgap.create_final_directory(self.phs, self.version, self.tempdir)
         self.assertTrue(os.path.exists(os.path.join(self.tempdir, self.phs, self.version)))
 
     def test_exception_raised_if_phs_and_version_exist(self):
@@ -864,7 +864,13 @@ class CreateFinalDirectoryTestCase(TempdirTestCase):
         os.mkdir(os.path.join(self.tempdir, self.phs))
         os.mkdir(os.path.join(self.tempdir, self.phs, self.version))
         with self.assertRaises(FileExistsError):
-            organize_dbgap.create_final_directory(self.phs, self.version, default_path=self.tempdir)
+            organize_dbgap.create_final_directory(self.phs, self.version, self.tempdir)
+
+    def test_exception_if_directory_doesnt_exist(self):
+        """Test that create_final_directory raises an exception if the specified out_path doesn't exist"""
+        nonexistent_directory = 'foo'
+        with self.assertRaisesRegex(FileNotFoundError, r"{outdir}'$".format(outdir=nonexistent_directory)):
+            organize_dbgap.create_final_directory(self.phs, self.version, nonexistent_directory)
 
 class CopyFilesTestCase(TempdirTestCase):
     """Tests of copy_files function"""
