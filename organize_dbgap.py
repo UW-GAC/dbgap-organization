@@ -9,6 +9,7 @@ import subprocess # for system commands - in this case, only diff
 from pprint import pprint
 import errno
 from stat import S_IRUSR, S_IXUSR, S_IRGRP, S_IXGRP
+from datetime import datetime
 
 __version__ = 1.0
 
@@ -361,7 +362,7 @@ def organize(raw_directory, organized_directory, link=False, nfiles=None, print_
                 print(f.basename)
             print('')
 
-def parse_input_directory(directory):
+def parse_input_directory(directory, preaccessioned=False):
     """Parse dbgap study accession and version out of input directory string
     
     Positional arguments
@@ -375,12 +376,24 @@ def parse_input_directory(directory):
     if directory.endswith("/"):
         directory = directory[:-1]
     basename = os.path.basename(directory)
-    regex = re.compile(r'(?P<phs>phs\d{6})\.(?P<v>v\d+)$')
-    match = regex.match(basename)
-    if match is not None:
-        return(match.groupdict())
+    
+    if preaccessioned:
+        regex = re.compile(r'^ProcessedPheno(?P<date>201\d{5})$')
+        match = regex.match(basename)
+        if match is not None:
+            groups = match.groupdict()
+            # this will fail with a ValueError if it is not a valid date
+            date = datetime.strptime(groups['date'], '%Y%m%d')
+            return(groups)
+        else:
+            raise ValueError('{basename} does not match expected string ProcessedPheno<date>'.format(basename=basename))
     else:
-        raise ValueError('{basename} does not match expected string phs??????.v*'.format(basename=basename))
+        regex = re.compile(r'(?P<phs>phs\d{6})\.(?P<v>v\d+)$')
+        match = regex.match(basename)
+        if match is not None:
+            return(match.groupdict())
+        else:
+            raise ValueError('{basename} does not match expected string phs??????.v*'.format(basename=basename))
 
 
 def create_final_directory(phs, version, out_path):
