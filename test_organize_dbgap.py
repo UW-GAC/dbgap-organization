@@ -578,16 +578,16 @@ class GetSpecialFileSetTestCase(DbgapDirectoryStructureTestCase):
         with self.assertRaises(Exception):
             organize_dbgap._get_special_file_set(dbgap_files, pattern='Pedigree')
 
-    def test_exception_without_matching_var_report(self):
-        """test that _get_special_file_set raises an exceptoin if no var_report is found"""
-        self._make_file_set('phenotype')
-        self._make_file_set('pedigree')
-        # remove both of the matching data dictionaries
-        os.remove(self.var_report1.full_path)
-        os.remove(self.var_report2.full_path)
-        dbgap_files = organize_dbgap.get_file_list(self.tempdir)
-        with self.assertRaises(Exception):
-            organize_dbgap._get_special_file_set(dbgap_files, pattern='Pedigree')
+    #def test_exception_without_matching_var_report(self):
+    #    """test that _get_special_file_set raises an exceptoin if no var_report is found"""
+    #    self._make_file_set('phenotype')
+    #    self._make_file_set('pedigree')
+    #    # remove both of the matching data dictionaries
+    #    os.remove(self.var_report1.full_path)
+    #    os.remove(self.var_report2.full_path)
+    #    dbgap_files = organize_dbgap.get_file_list(self.tempdir)
+    #    with self.assertRaises(Exception):
+    #        organize_dbgap._get_special_file_set(dbgap_files, pattern='Pedigree')
 
     def test_exception_if_special_files_are_different(self):
         self._make_file_set('phenotype')
