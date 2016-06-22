@@ -165,7 +165,7 @@ def _get_special_file_set(dbgap_files, pattern='Subject'):
     _check_diffs(special_files)
     
     # get the var_report and data_dictionary to go with the subject file
-    var_report = _get_file_match(dbgap_files, special_files[0], 'var_report')
+    var_report = _get_file_match(dbgap_files, special_files[0], 'var_report', must_exist=False)
     data_dict = _get_file_match(dbgap_files, special_files[0], 'data_dict')
     
     # return the whole set
@@ -202,7 +202,7 @@ def _get_phenotype_file_sets(dbgap_files):
     for dbgap_id in dbgap_ids:
         
         matching_files = [f for f in phenotype_files if f.match.groupdict()['dbgap_id'] == dbgap_id]
-        var_report = _get_file_match(dbgap_files, matching_files[0], 'var_report')
+        var_report = _get_file_match(dbgap_files, matching_files[0], 'var_report', must_exist=False)
         data_dict = _get_file_match(dbgap_files, matching_files[0], 'data_dict')
         this_set = {'data_files': matching_files,
                     'var_report': var_report,
@@ -269,7 +269,10 @@ def _make_symlink_set(file_set):
     for f in file_set['data_files']:
         _make_symlink(f)
     # link the var_report
-    _make_symlink(file_set['var_report'])
+    if file_set['var_report'] is not None:
+        _make_symlink(file_set['var_report'])
+    else:
+        print ("missing var_report for file {file}".format(file=file_set['data_dict'].basename))
     # link the data dictionary
     _make_symlink(file_set['data_dict'])
 
