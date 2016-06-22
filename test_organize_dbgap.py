@@ -1010,21 +1010,21 @@ class ParseInputDirectoryReleasedTestCase(unittest.TestCase):
         with self.assertRaises(ValueError):
             organize_dbgap.parse_input_directory(phs_string)
 
-class ParseInputDirectoryPreaccessionedTestCase(unittest.TestCase):
+class ParseInputDirectoryPrereleaseTestCase(unittest.TestCase):
     """Tests for parse_input_directory with pre-accessioned data Note that it is impossible
     to test all non-matches for the regex so only a few specific cases are tested."""
     
     def test_working(self):
         date = '20160208'
         input_directory = ''.join(['ProcessedPheno', date])
-        result = organize_dbgap.parse_input_directory(input_directory, preaccessioned=True)
+        result = organize_dbgap.parse_input_directory(input_directory, prerelease=True)
         self.assertIsInstance(result, dict)
         self.assertEqual(result['date'], date)
 
     def test_working_with_trailing_slash(self):
         date = '20160208'
         input_directory = ''.join(['ProcessedPheno', date, '/'])
-        result = organize_dbgap.parse_input_directory(input_directory, preaccessioned=True)
+        result = organize_dbgap.parse_input_directory(input_directory, prerelease=True)
         self.assertIsInstance(result, dict)
         self.assertEqual(result['date'], date)
 
@@ -1033,21 +1033,21 @@ class ParseInputDirectoryPreaccessionedTestCase(unittest.TestCase):
         date = '20160208'
         input_directory = ''.join([prefix, date])
         with self.assertRaises(ValueError):
-            organize_dbgap.parse_input_directory(input_directory, preaccessioned=True)
+            organize_dbgap.parse_input_directory(input_directory, prerelease=True)
 
     def test_fails_with_valid_regex_but_invalid_date(self):
         prefix = 'ProcessedPheno'
         date = '20169999'
         input_directory = ''.join([prefix, date])
         with self.assertRaises(ValueError):
-            organize_dbgap.parse_input_directory(input_directory, preaccessioned=True)
+            organize_dbgap.parse_input_directory(input_directory, prerelease=True)
 
     def test_fails_with_valid_regex_but_valid_date_that_is_not_zero_padded(self):
         prefix = 'ProcessedPheno'
         date = '2016101'
         input_directory = ''.join([prefix, date])
         with self.assertRaises(ValueError):
-            organize_dbgap.parse_input_directory(input_directory, preaccessioned=True)
+            organize_dbgap.parse_input_directory(input_directory, prerelease=True)
     
 if __name__ == '__main__':
     unittest.main()

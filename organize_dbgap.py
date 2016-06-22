@@ -369,7 +369,7 @@ def organize(raw_directory, organized_directory, link=False, nfiles=None, print_
                 print(f.basename)
             print('')
 
-def parse_input_directory(directory, preaccessioned=False):
+def parse_input_directory(directory, prerelease=False):
     """Parse dbgap study accession and version out of input directory string
     
     Positional arguments
@@ -384,7 +384,7 @@ def parse_input_directory(directory, preaccessioned=False):
         directory = directory[:-1]
     basename = os.path.basename(directory)
     
-    if preaccessioned:
+    if prerelease:
         regex = re.compile(r'^ProcessedPheno(?P<date>201\d{5})$')
         match = regex.match(basename)
         if match is not None:
@@ -496,24 +496,24 @@ if __name__ == '__main__':
 
     parser.add_argument("directory")
     parser.add_argument("--outpath", "-o", default="/projects/topmed/downloaded_data/dbGaP/", type=str)
-    parser.add_argument("--preaccessioned", "-p", default=False, action='store_true')
+    parser.add_argument("--prerelease", "-p", default=False, action='store_true')
     parser.add_argument('--phs', default=None, type=int)
     args = parser.parse_args()
 
     # check arguments
-    if args.preaccessioned and (not args.phs):
-        parser.error('--preaccessioned requires both --phs and --date')
+    if args.prerelease and (not args.phs):
+        parser.error('--prerelease requires both --phs and --date')
     
-    if not args.preaccessioned and (args.phs):
-        parser.error('phs can only be passed if --preaccessioned is passed')
+    if not args.prerelease and (args.phs):
+        parser.error('phs can only be passed if --prerelease is passed')
 
     
     directory = os.path.abspath(args.directory)
-    phs_dict = parse_input_directory(directory, preaccessioned=args.preaccessioned)
+    phs_dict = parse_input_directory(directory, prerelease=args.prerelease)
 
     outpath = os.path.abspath(args.outpath)
-    if args.preaccessioned:
-        outpath = os.path.join(outpath, "preaccessioned")
+    if args.prerelease:
+        outpath = os.path.join(outpath, "prerelease")
         phs = 'phs{phs:06}'.format(phs=args.phs)
         subdirectory = phs_dict['date']
     else:
@@ -529,7 +529,7 @@ if __name__ == '__main__':
     organized_directory = os.path.join(output_directory, "organized")
     
     # do the decryption
-    if not args.preaccessioned:
+    if not args.prerelease:
         print("decrypting files...")
         decrypt(directory)
     
