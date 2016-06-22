@@ -11,7 +11,7 @@ import errno
 from stat import S_IRUSR, S_IXUSR, S_IRGRP, S_IXGRP
 from datetime import datetime
 
-__version__ = 1.0
+__version__ = 1.1
 
 # regular expression matchers for various kinds of dbgap files
 dbgap_re_dict = {'data_dict': r'^(?P<dbgap_id>phs\d{6}\.v\d+?\.pht\d{6}\.v\d+?)\.(?P<base>.+?)\.data_dict(?P<extra>\w{0,}?)\.xml$',
@@ -344,7 +344,7 @@ def organize(raw_directory, organized_directory, link=False, nfiles=None, print_
     os.chdir(raw_directory)
     
     dbgap_files = get_file_list(raw_directory)
-    
+        
     # find the special file sets
     subject_file_set = _get_special_file_set(dbgap_files, pattern="Subject")
     assert(subject_file_set is not None)
@@ -496,22 +496,42 @@ if __name__ == '__main__':
 
     parser.add_argument("directory")
     parser.add_argument("--outpath", "-o", default="/projects/topmed/downloaded_data/dbGaP/", type=str)
-
+    parser.add_argument("--preaccessioned", "-p", default=False, action='store_true')
+    parser.add_argument('--phs', default=None, type=int)
     args = parser.parse_args()
 
+    # check arguments
+    if args.preaccessioned and (not args.phs):
+        parser.error('--preaccessioned requires both --phs and --date')
+    
+    if not args.preaccessioned and (args.phs):
+        parser.error('phs can only be passed if --preaccessioned is passed')
+
+    
     directory = os.path.abspath(args.directory)
-    
-    phs_dict = parse_input_directory(directory)
-    
+    phs_dict = parse_input_directory(directory, preaccessioned=args.preaccessioned)
+
     outpath = os.path.abspath(args.outpath)
-    output_directory = create_final_directory(phs_dict['phs'], phs_dict['v'], outpath)
+    if args.preaccessioned:
+        outpath = os.path.join(outpath, "preaccessioned")
+        phs = 'phs{phs:06}'.format(phs=args.phs)
+        subdirectory = phs_dict['date']
+    else:
+        outpath = os.path.join(outpath, "released")
+        phs = phs_dict['phs']
+        subdirectory = phs_dict['v']
+    
+    #sys.exit(0)
+    
+    output_directory = create_final_directory(phs, subdirectory, outpath)
     
     raw_directory = os.path.join(output_directory, "raw")
     organized_directory = os.path.join(output_directory, "organized")
     
     # do the decryption
-    print("decrypting files...")
-    decrypt(directory)
+    if not args.preaccessioned:
+        print("decrypting files...")
+        decrypt(directory)
     
     print("copying files...")
     # copy files to the final "raw" directory
