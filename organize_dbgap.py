@@ -94,7 +94,7 @@ def _check_diffs(dbgap_file_subset):
             raise ValueError('files are expect to be the same but are different: {file_a}, {file_b}'.format(file_a=filename_a, file_b=filename_b))
 
 
-def _get_file_match(dbgap_files, dbgap_file_to_match, match_type, check_diffs=True):
+def _get_file_match(dbgap_files, dbgap_file_to_match, match_type, check_diffs=True, must_exist=True):
     """For a given DbgapFile, find the matcing var_report DbgapFile.
     
     Arguments:
@@ -122,6 +122,10 @@ def _get_file_match(dbgap_files, dbgap_file_to_match, match_type, check_diffs=Tr
             if f.match.groupdict()['dbgap_id'] == dbgap_id_to_match:
                 matches.append(f)
 
+    if len(matches) == 0:
+        if not must_exist:
+            return None
+        
     # need to diff the files here to make sure they are the same
     if check_diffs:
         _check_diffs(matches)
