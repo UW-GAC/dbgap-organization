@@ -9,8 +9,9 @@ import subprocess # for system commands - in this case, only diff
 from pprint import pprint
 import errno
 from stat import S_IRUSR, S_IXUSR, S_IRGRP, S_IXGRP
+from datetime import datetime
 
-__version__ = 1.0
+__version__ = 1.2
 
 # regular expression matchers for various kinds of dbgap files
 dbgap_re_dict = {'data_dict': r'^(?P<dbgap_id>phs\d{6}\.v\d+?\.pht\d{6}\.v\d+?)\.(?P<base>.+?)\.data_dict(?P<extra>\w{0,}?)\.xml$',
@@ -93,7 +94,7 @@ def _check_diffs(dbgap_file_subset):
             raise ValueError('files are expect to be the same but are different: {file_a}, {file_b}'.format(file_a=filename_a, file_b=filename_b))
 
 
-def _get_file_match(dbgap_files, dbgap_file_to_match, match_type, check_diffs=True):
+def _get_file_match(dbgap_files, dbgap_file_to_match, match_type, check_diffs=True, must_exist=True):
     """For a given DbgapFile, find the matcing var_report DbgapFile.
     
     Arguments:
@@ -121,6 +122,10 @@ def _get_file_match(dbgap_files, dbgap_file_to_match, match_type, check_diffs=Tr
             if f.match.groupdict()['dbgap_id'] == dbgap_id_to_match:
                 matches.append(f)
 
+    if len(matches) == 0:
+        if not must_exist:
+            return None
+        
     # need to diff the files here to make sure they are the same
     if check_diffs:
         _check_diffs(matches)
@@ -160,7 +165,7 @@ def _get_special_file_set(dbgap_files, pattern='Subject'):
     _check_diffs(special_files)
     
     # get the var_report and data_dictionary to go with the subject file
-    var_report = _get_file_match(dbgap_files, special_files[0], 'var_report')
+    var_report = _get_file_match(dbgap_files, special_files[0], 'var_report', must_exist=False)
     data_dict = _get_file_match(dbgap_files, special_files[0], 'data_dict')
     
     # return the whole set
@@ -197,7 +202,7 @@ def _get_phenotype_file_sets(dbgap_files):
     for dbgap_id in dbgap_ids:
         
         matching_files = [f for f in phenotype_files if f.match.groupdict()['dbgap_id'] == dbgap_id]
-        var_report = _get_file_match(dbgap_files, matching_files[0], 'var_report')
+        var_report = _get_file_match(dbgap_files, matching_files[0], 'var_report', must_exist=False)
         data_dict = _get_file_match(dbgap_files, matching_files[0], 'data_dict')
         this_set = {'data_files': matching_files,
                     'var_report': var_report,
@@ -264,7 +269,10 @@ def _make_symlink_set(file_set):
     for f in file_set['data_files']:
         _make_symlink(f)
     # link the var_report
-    _make_symlink(file_set['var_report'])
+    if file_set['var_report'] is not None:
+        _make_symlink(file_set['var_report'])
+    else:
+        print ("missing var_report for file {file}".format(file=file_set['data_dict'].basename))
     # link the data dictionary
     _make_symlink(file_set['data_dict'])
 
@@ -323,7 +331,7 @@ def decrypt(directory, decrypt_path='/projects/resources/software/apps/sratoolki
     os.chdir(original_directory)
 
 
-def organize(raw_directory, organized_directory, link=False, nfiles=None, print_unsorted=True):
+def organize(raw_directory, organized_directory, link=False, nfiles=None):
     """Organize dbgap files by type and make symlinks
     
     Positional arguments
@@ -336,7 +344,7 @@ def organize(raw_directory, organized_directory, link=False, nfiles=None, print_
     os.chdir(raw_directory)
     
     dbgap_files = get_file_list(raw_directory)
-    
+        
     # find the special file sets
     subject_file_set = _get_special_file_set(dbgap_files, pattern="Subject")
     assert(subject_file_set is not None)
@@ -351,17 +359,22 @@ def organize(raw_directory, organized_directory, link=False, nfiles=None, print_
     if link:
         _make_symlinks(organized_directory, subject_file_set, pedigree_file_set, sample_file_set, phenotype_file_sets, nfiles=nfiles)
     
-    # report files without matches
+    # link files without matches in the "Other" directory
     unsorted_files = [f for f in dbgap_files if f.file_type is None]
     
-    if print_unsorted:
-        if len(unsorted_files) > 0:
-            print("\nunsorted files:")
-            for f in unsorted_files:
-                print(f.basename)
-            print('')
+    if len(unsorted_files) > 0:
+        os.chdir(organized_directory)
+        if not os.path.exists("Other"):
+            os.mkdir("Other")
+        os.chdir("Other")
 
-def parse_input_directory(directory):
+        for unsorted_file in unsorted_files:
+            if not os.path.exists(os.path.basename(unsorted_file.full_path)):
+                _make_symlink(unsorted_file)
+        
+        os.chdir("..")
+
+def parse_input_directory(directory, prerelease=False):
     """Parse dbgap study accession and version out of input directory string
     
     Positional arguments
@@ -375,12 +388,24 @@ def parse_input_directory(directory):
     if directory.endswith("/"):
         directory = directory[:-1]
     basename = os.path.basename(directory)
-    regex = re.compile(r'(?P<phs>phs\d{6})\.(?P<v>v\d+)$')
-    match = regex.match(basename)
-    if match is not None:
-        return(match.groupdict())
+    
+    if prerelease:
+        regex = re.compile(r'^ProcessedPheno(?P<date>201\d{5})$')
+        match = regex.match(basename)
+        if match is not None:
+            groups = match.groupdict()
+            # this will fail with a ValueError if it is not a valid date
+            date = datetime.strptime(groups['date'], '%Y%m%d')
+            return(groups)
+        else:
+            raise ValueError('{basename} does not match expected string ProcessedPheno<date>'.format(basename=basename))
     else:
-        raise ValueError('{basename} does not match expected string phs??????.v*'.format(basename=basename))
+        regex = re.compile(r'(?P<phs>phs\d{6})\.(?P<v>v\d+)$')
+        match = regex.match(basename)
+        if match is not None:
+            return(match.groupdict())
+        else:
+            raise ValueError('{basename} does not match expected string phs??????.v*'.format(basename=basename))
 
 
 def create_final_directory(phs, version, out_path):
@@ -476,22 +501,42 @@ if __name__ == '__main__':
 
     parser.add_argument("directory")
     parser.add_argument("--outpath", "-o", default="/projects/topmed/downloaded_data/dbGaP/", type=str)
-
+    parser.add_argument("--prerelease", "-p", default=False, action='store_true')
+    parser.add_argument('--phs', default=None, type=int)
     args = parser.parse_args()
 
+    # check arguments
+    if args.prerelease and (not args.phs):
+        parser.error('--prerelease requires both --phs and --date')
+    
+    if not args.prerelease and (args.phs):
+        parser.error('phs can only be passed if --prerelease is passed')
+
+    
     directory = os.path.abspath(args.directory)
-    
-    phs_dict = parse_input_directory(directory)
-    
+    phs_dict = parse_input_directory(directory, prerelease=args.prerelease)
+
     outpath = os.path.abspath(args.outpath)
-    output_directory = create_final_directory(phs_dict['phs'], phs_dict['v'], outpath)
+    if args.prerelease:
+        outpath = os.path.join(outpath, "prerelease")
+        phs = 'phs{phs:06}'.format(phs=args.phs)
+        subdirectory = phs_dict['date']
+    else:
+        outpath = os.path.join(outpath, "released")
+        phs = phs_dict['phs']
+        subdirectory = phs_dict['v']
+    
+    #sys.exit(0)
+    
+    output_directory = create_final_directory(phs, subdirectory, outpath)
     
     raw_directory = os.path.join(output_directory, "raw")
     organized_directory = os.path.join(output_directory, "organized")
     
     # do the decryption
-    print("decrypting files...")
-    decrypt(directory)
+    if not args.prerelease:
+        print("decrypting files...")
+        decrypt(directory)
     
     print("copying files...")
     # copy files to the final "raw" directory

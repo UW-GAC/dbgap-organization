@@ -59,7 +59,7 @@ def _get_test_dbgap_filename(file_type, **kwargs):
     if file_type == 'phenotype':
         ps = kwargs.get('ps', fake.pyint())
         consent_group = kwargs.get('consent', fake.pyint())
-        consent_code = kwargs.get('consent_code', fake.word())
+        consent_code = kwargs.get('consent_code', fake.word()).upper()
         end = '.p{ps}.c{c}.{base}.{code}.txt'.format(ps=ps, c=consent_group, base=base, code=consent_code)
     elif file_type == 'var_report':
         ps = kwargs.get('ps', fake.pyint())
@@ -75,6 +75,9 @@ def _get_test_dbgap_filename(file_type, **kwargs):
     elif file_type == 'pedigree':
         ps = kwargs.get('ps', fake.pyint())
         end = '.p{ps}.Pedigree.MULTI.txt'.format(ps=ps)
+    elif file_type == 'other':
+        beginning = base
+        end = '.xlsx'
     else:
         raise ValueError('file_type does not match allowed types')
     return beginning + end
@@ -304,6 +307,23 @@ class GetFileMatchTestCase(TempdirTestCase):
 
         files = [xml_file, other_file, file_to_match]
         self.assertEqual(organize_dbgap._get_file_match(files, file_to_match, 'data_dict', check_diffs=False), xml_file)
+
+    def test_no_exception_on_nonexistent_file_with_must_exist_equals_False(self):
+        """does it return None with a nonexistent file and must_exist = False?"""
+        phs = 7
+        pht_to_match = 1
+        other_pht = 2
+        # make a set of matching files
+        filename = _get_test_dbgap_filename('data_dict', phs=phs, phs_v=1, pht=pht_to_match, pht_v=1)
+        xml_file = DbgapFile(filename, check_exists=False)
+        filename = _get_test_dbgap_filename('phenotype', phs=phs, phs_v=1, pht=pht_to_match, pht_v=1)
+        file_to_match = DbgapFile(filename, check_exists=False)
+        # make a file that doesn't match
+        filename = _get_test_dbgap_filename('data_dict', phs=phs, phs_v=1, pht_v=1)
+        other_file = DbgapFile(filename, check_exists=False)
+
+        files = [other_file, file_to_match]
+        self.assertIsNone(organize_dbgap._get_file_match(files, file_to_match, 'data_dict', must_exist=False))
 
     def test_working_var_report(self):
         """does it properly match var_reports?"""
@@ -561,16 +581,16 @@ class GetSpecialFileSetTestCase(DbgapDirectoryStructureTestCase):
         with self.assertRaises(Exception):
             organize_dbgap._get_special_file_set(dbgap_files, pattern='Pedigree')
 
-    def test_exception_without_matching_var_report(self):
-        """test that _get_special_file_set raises an exceptoin if no var_report is found"""
-        self._make_file_set('phenotype')
-        self._make_file_set('pedigree')
-        # remove both of the matching data dictionaries
-        os.remove(self.var_report1.full_path)
-        os.remove(self.var_report2.full_path)
-        dbgap_files = organize_dbgap.get_file_list(self.tempdir)
-        with self.assertRaises(Exception):
-            organize_dbgap._get_special_file_set(dbgap_files, pattern='Pedigree')
+    #def test_exception_without_matching_var_report(self):
+    #    """test that _get_special_file_set raises an exceptoin if no var_report is found"""
+    #    self._make_file_set('phenotype')
+    #    self._make_file_set('pedigree')
+    #    # remove both of the matching data dictionaries
+    #    os.remove(self.var_report1.full_path)
+    #    os.remove(self.var_report2.full_path)
+    #    dbgap_files = organize_dbgap.get_file_list(self.tempdir)
+    #    with self.assertRaises(Exception):
+    #        organize_dbgap._get_special_file_set(dbgap_files, pattern='Pedigree')
 
     def test_exception_if_special_files_are_different(self):
         self._make_file_set('phenotype')
@@ -929,16 +949,22 @@ class OrganizeTestCase(DbgapDirectoryStructureTestCase):
         sample_file_check = self.data_file1
         self._make_file_set('pedigree')
         pedigree_file_check = self.data_file1
+        # other file
+        other_file = os.path.join(self.dir1, _get_test_dbgap_filename('other'))
+        _touch(other_file)
         # move all the files to the raw directory, because it's required by the organize function
         organize_dbgap.organize(self.tempdir, self.organized_dir, link=True)
         self.assertTrue(os.path.exists(os.path.join(self.organized_dir, "Subject")))
-        self.assertNotEqual(os.listdir(os.path.join(self.organized_dir, "Subject")), 0)
+        self.assertNotEqual(len(os.listdir(os.path.join(self.organized_dir, "Subject"))), 0)
         self.assertTrue(os.path.exists(os.path.join(self.organized_dir, "Phenotypes")))
-        self.assertNotEqual(os.listdir(os.path.join(self.organized_dir, "Phenotypes")), 0)
+        self.assertNotEqual(len(os.listdir(os.path.join(self.organized_dir, "Phenotypes"))), 0)
+        self.assertTrue(os.path.exists(os.path.join(self.organized_dir, "Other")))
+        self.assertNotEqual(len(os.listdir(os.path.join(self.organized_dir, "Other"))), 0)
 
-class ParseInputDirectoryTestCase(unittest.TestCase):
-    """Tests for parse_input_directory. Note that it is impossible to test all non-matches
-    for the regex, so only a few specific cases are tested"""
+
+class ParseInputDirectoryReleasedTestCase(unittest.TestCase):
+    """Tests for parse_input_directory with released data. Note that it is impossible
+    to test all non-matches for the regex, so only a few specific cases are tested"""
 
     def test_working(self):
         """test that a directory with the expected structure is appropriately parsed"""
@@ -993,5 +1019,44 @@ class ParseInputDirectoryTestCase(unittest.TestCase):
         with self.assertRaises(ValueError):
             organize_dbgap.parse_input_directory(phs_string)
 
+class ParseInputDirectoryPrereleaseTestCase(unittest.TestCase):
+    """Tests for parse_input_directory with pre-accessioned data Note that it is impossible
+    to test all non-matches for the regex so only a few specific cases are tested."""
+    
+    def test_working(self):
+        date = '20160208'
+        input_directory = ''.join(['ProcessedPheno', date])
+        result = organize_dbgap.parse_input_directory(input_directory, prerelease=True)
+        self.assertIsInstance(result, dict)
+        self.assertEqual(result['date'], date)
+
+    def test_working_with_trailing_slash(self):
+        date = '20160208'
+        input_directory = ''.join(['ProcessedPheno', date, '/'])
+        result = organize_dbgap.parse_input_directory(input_directory, prerelease=True)
+        self.assertIsInstance(result, dict)
+        self.assertEqual(result['date'], date)
+
+    def test_fails_with_invalid_regex(self):
+        prefix = fake.word()
+        date = '20160208'
+        input_directory = ''.join([prefix, date])
+        with self.assertRaises(ValueError):
+            organize_dbgap.parse_input_directory(input_directory, prerelease=True)
+
+    def test_fails_with_valid_regex_but_invalid_date(self):
+        prefix = 'ProcessedPheno'
+        date = '20169999'
+        input_directory = ''.join([prefix, date])
+        with self.assertRaises(ValueError):
+            organize_dbgap.parse_input_directory(input_directory, prerelease=True)
+
+    def test_fails_with_valid_regex_but_valid_date_that_is_not_zero_padded(self):
+        prefix = 'ProcessedPheno'
+        date = '2016101'
+        input_directory = ''.join([prefix, date])
+        with self.assertRaises(ValueError):
+            organize_dbgap.parse_input_directory(input_directory, prerelease=True)
+    
 if __name__ == '__main__':
     unittest.main()
