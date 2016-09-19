@@ -331,7 +331,7 @@ def decrypt(directory, decrypt_path='/projects/resources/software/apps/sratoolki
     os.chdir(original_directory)
 
 
-def organize(raw_directory, organized_directory, link=False, nfiles=None, print_unsorted=True):
+def organize(raw_directory, organized_directory, link=False, nfiles=None):
     """Organize dbgap files by type and make symlinks
     
     Positional arguments
@@ -359,15 +359,20 @@ def organize(raw_directory, organized_directory, link=False, nfiles=None, print_
     if link:
         _make_symlinks(organized_directory, subject_file_set, pedigree_file_set, sample_file_set, phenotype_file_sets, nfiles=nfiles)
     
-    # report files without matches
+    # link files without matches in the "Other" directory
     unsorted_files = [f for f in dbgap_files if f.file_type is None]
     
-    if print_unsorted:
-        if len(unsorted_files) > 0:
-            print("\nunsorted files:")
-            for f in unsorted_files:
-                print(f.basename)
-            print('')
+    if len(unsorted_files) > 0:
+        os.chdir(organized_directory)
+        if not os.path.exists("Other"):
+            os.mkdir("Other")
+        os.chdir("Other")
+
+        for unsorted_file in unsorted_files:
+            if not os.path.exists(os.path.basename(unsorted_file.full_path)):
+                _make_symlink(unsorted_file)
+        
+        os.chdir("..")
 
 def parse_input_directory(directory, prerelease=False):
     """Parse dbgap study accession and version out of input directory string

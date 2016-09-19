@@ -75,6 +75,9 @@ def _get_test_dbgap_filename(file_type, **kwargs):
     elif file_type == 'pedigree':
         ps = kwargs.get('ps', fake.pyint())
         end = '.p{ps}.Pedigree.MULTI.txt'.format(ps=ps)
+    elif file_type == 'other':
+        beginning = base
+        end = '.xlsx'
     else:
         raise ValueError('file_type does not match allowed types')
     return beginning + end
@@ -946,12 +949,18 @@ class OrganizeTestCase(DbgapDirectoryStructureTestCase):
         sample_file_check = self.data_file1
         self._make_file_set('pedigree')
         pedigree_file_check = self.data_file1
+        # other file
+        other_file = os.path.join(self.dir1, _get_test_dbgap_filename('other'))
+        _touch(other_file)
         # move all the files to the raw directory, because it's required by the organize function
         organize_dbgap.organize(self.tempdir, self.organized_dir, link=True)
         self.assertTrue(os.path.exists(os.path.join(self.organized_dir, "Subject")))
         self.assertNotEqual(os.listdir(os.path.join(self.organized_dir, "Subject")), 0)
         self.assertTrue(os.path.exists(os.path.join(self.organized_dir, "Phenotypes")))
         self.assertNotEqual(os.listdir(os.path.join(self.organized_dir, "Phenotypes")), 0)
+        self.assertTrue(os.path.exists(os.path.join(self.organized_dir, "Other")))
+        self.assertNotEqual(len(os.listdir(os.path.join(self.organized_dir, "Other"))), 0)
+
 
 class ParseInputDirectoryReleasedTestCase(unittest.TestCase):
     """Tests for parse_input_directory with released data. Note that it is impossible
