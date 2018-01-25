@@ -354,12 +354,27 @@ def _check_consent_groups(subject_file_set, phenotype_file_sets,
     # Remove consent group 0
     unique_consent_values.remove(0)
     n_consent_groups = len(unique_consent_values)
+    expected_consent_groups = ['.c{consent}.'.format(consent=x) for x in unique_consent_values]
+    expected_consent_groups.sort()
 
     # Check that all phenotype file sets have the expected number of consent values.
     for file_set in phenotype_file_sets:
         if len(file_set['data_files']) != n_consent_groups:
             msg = 'Number of phenotype files does not match expected number of consent groups.'
             raise RuntimeError(msg)
+        # Check that expected consent groups are found.
+        basenames = [x.basename for x in file_set['data_files']]
+        basenames.sort()
+        mismatches = []
+        for x, y in zip(expected_consent_groups, basenames):
+            if x not in y:
+                mismatches.append(x.replace('.', ''))
+        if len(mismatches) > 0:
+            msg = 'Missing files for consent groups {groups}'.format(
+                groups=', '.join(mismatches)
+            )
+            raise RuntimeError(msg)
+
 
 
 def organize(raw_directory, organized_directory, link=False, nfiles=None,

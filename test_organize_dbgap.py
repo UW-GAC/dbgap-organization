@@ -988,6 +988,34 @@ class CheckConsentGroupsTestCase(DbgapDirectoryStructureTestCase):
         with self.assertRaisesRegex(RuntimeError, expected_error):
             organize_dbgap._check_consent_groups(subject_set, phenotype_sets)
 
+    def test_fails_if_phenotype_file_consent_codes_dont_match_values_in_subject_file(self):
+        # Rename one set of files to have the wrong consent code.
+        # _get_phenotype_file_sets
+        for x in glob.iglob(os.path.join(self.dir2, "*.c2.*")):
+            new_name = x.replace('.c2.', '.c3.')
+            os.rename(x, new_name)
+
+        dbgap_files = organize_dbgap.get_file_list(self.tempdir)
+        subject_set = organize_dbgap._get_special_file_set(dbgap_files, pattern='Subject')
+        phenotype_sets = organize_dbgap._get_phenotype_file_sets(dbgap_files)
+
+        expected_error = 'Missing files for consent groups c2'
+        with self.assertRaisesRegex(RuntimeError, expected_error):
+            organize_dbgap._check_consent_groups(subject_set, phenotype_sets)
+
+    def test_works_if_phenotype_files_in_different_order_than_consent_codes(self):
+        # Rename the download directories so they are in the opposite order of
+        # the consent codes.
+        os.rename(self.dir1, os.path.join(self.tempdir, 'zzz'))
+        os.rename(self.dir2, os.path.join(self.tempdir, 'aaa'))
+        dbgap_files = organize_dbgap.get_file_list(self.tempdir)
+        subject_set = organize_dbgap._get_special_file_set(dbgap_files, pattern='Subject')
+        phenotype_sets = organize_dbgap._get_phenotype_file_sets(dbgap_files)
+
+        self.assertIsNone(
+            organize_dbgap._check_consent_groups(subject_set, phenotype_sets)
+            )
+
     def setUp(self):
         # Call superclass constructor.
         super(CheckConsentGroupsTestCase, self).setUp()
