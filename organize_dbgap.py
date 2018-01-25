@@ -215,10 +215,16 @@ def _get_phenotype_file_sets(dbgap_files):
     n_phenotype_files = max([len(x['data_files']) for x in phenotype_file_sets])
 
     for x in phenotype_file_sets:
+        basenames = [y.basename for y in x['data_files']]
         if n_phenotype_files != len(x['data_files']):
-            filenames = [y.basename for y in x['data_files']]
-            msg = 'phenotype file set should have {n} data files but only has: {filenames}'.format(filenames=', '.join(filenames), n=n_phenotype_files)
+            msg = 'phenotype file set should have {n} data files but only has: {filenames}'.format(filenames=', '.join(basenames), n=n_phenotype_files)
             raise ValueError(msg)
+        for y in basenames:
+            if basenames.count(y) > 1:
+                msg = 'duplicate phenotype files detected for filename {name}'.format(
+                    name=y
+                )
+                raise RuntimeError(msg)
 
     return phenotype_file_sets
 

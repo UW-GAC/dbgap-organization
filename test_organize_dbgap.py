@@ -5,6 +5,7 @@ import re
 import tempfile
 import shutil
 import subprocess
+import glob
 
 from faker import Factory
 
@@ -663,6 +664,17 @@ class GetPhenotypeFileSetsTestCase(DbgapDirectoryStructureTestCase):
         with self.assertRaises(ValueError):
             organize_dbgap._get_phenotype_file_sets(dbgap_files)
 
+    def test_exception_raised_if_duplicate_phenotype_filenames_in_different_directories(self):
+        self._make_file_set('phenotype')
+        basename = self.data_file1.basename
+        shutil.rmtree(self.dir2)
+        shutil.copytree(self.dir1, self.dir2)
+        dbgap_files = organize_dbgap.get_file_list(self.tempdir)
+        expected_msg = 'duplicate phenotype files detected for filename {name}'.format(
+            name=basename
+        )
+        with self.assertRaisesRegex(RuntimeError, expected_msg):
+            organize_dbgap._get_phenotype_file_sets(dbgap_files)
 
 class CheckSymlinkTestCase(TempdirTestCase):
     """tests for _check_symlink"""
@@ -960,6 +972,13 @@ class CheckConsentGroupsTestCase(DbgapDirectoryStructureTestCase):
         # Create a third directory with phenotype files.
         dir3 = os.path.join(self.tempdir, 'dir3')
         shutil.copytree(self.dir2, dir3)
+        code2 = self.consent_code2.upper()
+        code3 = fake.word().upper()
+        # Rename files so they don't trip the duplicated file check in
+        # _get_phenotype_file_sets
+        for x in glob.iglob(os.path.join(dir3, "*." + code2 + ".*")):
+            new_name = x.replace('.c2.', '.c3.').replace(code2, code3)
+            os.rename(x, new_name)
 
         dbgap_files = organize_dbgap.get_file_list(self.tempdir)
         subject_set = organize_dbgap._get_special_file_set(dbgap_files, pattern='Subject')
