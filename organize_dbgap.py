@@ -352,7 +352,8 @@ def _check_consent_groups(subject_file_set, phenotype_file_sets,
 
     unique_consent_values = set(consent_values.unique())
     # Remove consent group 0
-    unique_consent_values.remove('0')
+    if '0' in unique_consent_values:
+        unique_consent_values.remove('0')
     n_consent_groups = len(unique_consent_values)
     expected_consent_groups = ['.c{consent}.'.format(consent=x) for x in unique_consent_values]
     expected_consent_groups.sort()

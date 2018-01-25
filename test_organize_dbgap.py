@@ -466,7 +466,6 @@ class DbgapDirectoryStructureTestCase(TempdirTestCase):
                 'b\t2',
                 'c\t1',
                 'd\t2',
-                'e\t0',
                 ''
                 ])
         if file_type == 'sample':
@@ -1008,6 +1007,31 @@ class CheckConsentGroupsTestCase(DbgapDirectoryStructureTestCase):
         # the consent codes.
         os.rename(self.dir1, os.path.join(self.tempdir, 'zzz'))
         os.rename(self.dir2, os.path.join(self.tempdir, 'aaa'))
+        dbgap_files = organize_dbgap.get_file_list(self.tempdir)
+        subject_set = organize_dbgap._get_special_file_set(dbgap_files, pattern='Subject')
+        phenotype_sets = organize_dbgap._get_phenotype_file_sets(dbgap_files)
+
+        self.assertIsNone(
+            organize_dbgap._check_consent_groups(subject_set, phenotype_sets)
+            )
+
+    def test_works_if_subject_file_has_a_zero_value_consent(self):
+        # Create a subject file that has trailing tabs.
+        lines = '\n'.join([
+            '# a comment',
+            'SUBJECT_ID\tCONSENT',
+            '1\t1',
+            '2\t2',
+            '3\t1',
+            '4\t2',
+            '5\t0',
+            ''
+            ])
+        for x in glob.iglob(os.path.join(self.dir2, "*.Subject.MULTI.txt")):
+            _touch(x, text=lines)
+        for x in glob.iglob(os.path.join(self.dir1, "*.Subject.MULTI.txt")):
+            _touch(x, text=lines)
+
         dbgap_files = organize_dbgap.get_file_list(self.tempdir)
         subject_set = organize_dbgap._get_special_file_set(dbgap_files, pattern='Subject')
         phenotype_sets = organize_dbgap._get_phenotype_file_sets(dbgap_files)
