@@ -10,6 +10,7 @@ from pprint import pprint
 import errno
 from stat import S_IRUSR, S_IXUSR, S_IRGRP, S_IXGRP
 from datetime import datetime
+import pandas as pd
 
 __version__ = 1.2
 
@@ -330,8 +331,33 @@ def decrypt(directory, decrypt_path='/projects/resources/software/apps/sratoolki
     subprocess.check_call('{vdb} -q .'.format(vdb=decrypt_path), shell=True)
     os.chdir(original_directory)
 
+def _check_consent_groups(subject_file_set, phenotype_file_sets,
+    consent_variable="CONSENT"):
+    # Get the number of unique consent groups from the subject file.
+    subj_file = subject_file_set['data_files'][0].full_path
+    subj = pd.read_csv(subj_file, comment='#', delimiter='\t')
+    try:
+        consent_values = subj[consent_variable]
+    except KeyError:
+        msg = 'Expected consent variable {var} not found in subject file.'.format(
+            var=consent_variable
+        )
+        raise KeyError(msg)
 
-def organize(raw_directory, organized_directory, link=False, nfiles=None):
+    unique_consent_values = set(consent_values.unique())
+    # Remove consent group 0
+    unique_consent_values.remove(0)
+    n_consent_groups = len(unique_consent_values)
+
+    # Check that all phenotype file sets have the expected number of consent values.
+    for file_set in phenotype_file_sets:
+        if len(file_set['data_files']) != n_consent_groups:
+            msg = 'Number of phenotype files does not match expected number of consent groups.'
+            raise RuntimeError(msg)
+
+
+def organize(raw_directory, organized_directory, link=False, nfiles=None,
+    consent_variable="CONSENT"):
     """Organize dbgap files by type and make symlinks
 
     Positional arguments
@@ -340,6 +366,7 @@ def organize(raw_directory, organized_directory, link=False, nfiles=None):
     Keyword arguments
     link: boolean indicator whether to make symlinks or not
     nfiles: integer argument to limit number of symlinks created (for testing purposes)
+    consent_variable: string indicating name of consent column in Subject file
     """
     os.chdir(raw_directory)
 
@@ -354,7 +381,11 @@ def organize(raw_directory, organized_directory, link=False, nfiles=None):
 
     # find the phenotype file sets
     phenotype_file_sets = _get_phenotype_file_sets(dbgap_files)
-    
+
+    # Check that phenotype files exist for all consent groups.
+    _check_consent_groups(subject_file_set, phenotype_file_sets,
+        consent_variable=consent_variable)
+
     # if requested, generate the symlinks in the 'organized' subdirectory
     if link:
         _make_symlinks(organized_directory, subject_file_set, pedigree_file_set, sample_file_set, phenotype_file_sets, nfiles=nfiles)
@@ -503,6 +534,8 @@ if __name__ == '__main__':
     parser.add_argument("--outpath", "-o", default="/projects/topmed/downloaded_data/dbGaP/", type=str)
     parser.add_argument("--prerelease", "-p", default=False, action='store_true')
     parser.add_argument('--phs', default=None, type=int)
+    parser.add_argument('--consent-variable', type=str, default='CONSENT',
+        help='name of consent variable in Subject file')
     args = parser.parse_args()
 
     # check arguments
@@ -547,7 +580,7 @@ if __name__ == '__main__':
 
     # organize files into symlinks
     print("organizing files into sets and making symlinks...")
-    organize(raw_directory, organized_directory, link=True)
+    organize(raw_directory, organized_directory, link=True, consent_variable=args.consent_variable)
 
     # write protect final directory
     print("write protecting final directory")
