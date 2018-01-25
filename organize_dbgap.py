@@ -341,7 +341,7 @@ def _check_consent_groups(subject_file_set, phenotype_file_sets,
     consent_variable="CONSENT"):
     # Get the number of unique consent groups from the subject file.
     subj_file = subject_file_set['data_files'][0].full_path
-    subj = pd.read_csv(subj_file, comment='#', delimiter='\t')
+    subj = pd.read_csv(subj_file, comment='#', delimiter='\t', dtype=str)
     try:
         consent_values = subj[consent_variable]
     except KeyError:
@@ -352,7 +352,7 @@ def _check_consent_groups(subject_file_set, phenotype_file_sets,
 
     unique_consent_values = set(consent_values.unique())
     # Remove consent group 0
-    unique_consent_values.remove(0)
+    unique_consent_values.remove('0')
     n_consent_groups = len(unique_consent_values)
     expected_consent_groups = ['.c{consent}.'.format(consent=x) for x in unique_consent_values]
     expected_consent_groups.sort()
