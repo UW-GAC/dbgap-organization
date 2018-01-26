@@ -49,7 +49,17 @@ For example, framingham v27 is phs000007.v27 and Cleveland Family Study v1 is ph
 Instructions to do this still need to be added.
 
 ## run the python script
+
+Before you can run `organize_dbgap.py` you will need to find the name of the consent variable for this accession.
+You can either look in the Subject file in one of the downloaded consent groups or on the dbGaP website.
+
+Run the script to organize the files.
+You may need to work in a virtual environment that has the package requirements installed (`pandas`, in particular).
+The requirements are found in the `pip_requirements.txt` file in the same directory as the `organize_dbgap.py` script.
+If the consent variable is not named `CONSENT`, you will need to specify the variable name with the `--consent-variable <name>` flag when you run it.
+```
 organize_dbgap.py downloads/phsXXXXXX.vXX
+```
 
 This script can be run from any directory. It will:
 
@@ -65,7 +75,10 @@ This script can be run from any directory. It will:
 
 * match up each phenotype or special file with its corresponding var_report and data_dict file
 
-* organize raw files using symlinks in the "organized" subdirectory, e.g., /projects/topmed/downloaded_data/dbGaP/phs000007/v27/organized
+* check that all expected consent groups have been downloaded
+
+* organize raw files using symlinks in the "organized" subdirectory, e.g., `/projects/topmed/downloaded_data/dbGaP/phs000007/v27/organized`
 
 * print out any files that were not sortable because they didn't match the expected filename conventions. These should be inspected to make sure nothing was missed.
 
+If the script crashes for any reason, you will need to remove the directory it created (e.g., `/projects/topmed/downloaded_data/dbGaP/<phs>/<version>/`) before trying again.
