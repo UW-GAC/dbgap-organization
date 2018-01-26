@@ -3,3 +3,4 @@ __pycache__
 .coverage
 htmlcov/
 setup_dbgap.html
+tmp*
