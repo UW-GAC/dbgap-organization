@@ -1015,6 +1015,32 @@ class CheckConsentGroupsTestCase(DbgapDirectoryStructureTestCase):
             organize_dbgap._check_consent_groups(subject_set, phenotype_sets)
             )
 
+    def test_works_if_subject_file_data_rows_have_trailing_tabs(self):
+        # Create a subject file that has trailing tabs.
+        # May need the additional STATUS variable to make it work "properly".
+        lines = '\n'.join([
+            '# a comment',
+            'SUBJECT_ID\tCONSENT\tSTATUS',
+            '1\t1\t1\t',
+            '2\t2\t1\t',
+            '3\t1\t1\t',
+            '4\t2\t1\t',
+            '5\t0\t1\t',
+            ''
+            ])
+        for x in glob.iglob(os.path.join(self.dir2, "*.Subject.MULTI.txt")):
+            _touch(x, text=lines)
+        for x in glob.iglob(os.path.join(self.dir1, "*.Subject.MULTI.txt")):
+            _touch(x, text=lines)
+
+        dbgap_files = organize_dbgap.get_file_list(self.tempdir)
+        subject_set = organize_dbgap._get_special_file_set(dbgap_files, pattern='Subject')
+        phenotype_sets = organize_dbgap._get_phenotype_file_sets(dbgap_files)
+
+        self.assertIsNone(
+            organize_dbgap._check_consent_groups(subject_set, phenotype_sets)
+            )
+
     def test_works_if_subject_file_has_a_zero_value_consent(self):
         # Create a subject file that has trailing tabs.
         lines = '\n'.join([
