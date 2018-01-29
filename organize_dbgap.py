@@ -12,7 +12,7 @@ from stat import S_IRUSR, S_IXUSR, S_IRGRP, S_IXGRP
 from datetime import datetime
 import pandas as pd
 
-__version__ = 1.2
+__version__ = 1.3
 
 # regular expression matchers for various kinds of dbgap files
 dbgap_re_dict = {'data_dict': r'^(?P<dbgap_id>phs\d{6}\.v\d+?\.pht\d{6}\.v\d+?)\.(?P<base>.+?)\.data_dict(?P<extra>\w{0,}?)\.xml$',
