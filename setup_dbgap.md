@@ -1,23 +1,27 @@
 # General info
-The dbGaP project directory for topmed is /projects/topmed/dbGaP-9334/.
+The dbGaP project directory for topmed is `/projects/topmed/dbGaP-9334/`.
 All decryption needs to be done in this directory.
-Afterward, the decrypted phenotype files will be moved out of this directory and into a different directory under /projects/topmed/downloaded_data/dbGaP/<phs>/<version>/raw.
-Symlinks will be generated in /projects/topmed/downloaded_data/dbGaP/<phs>/<version>/organized for easier loading into the database.
+Afterward, the decrypted phenotype files will be moved out of this directory and into a different directory under `/projects/topmed/downloaded_data/dbGaP/<phs>/<version>/raw`.
+Symlinks will be generated in `/projects/topmed/downloaded_data/dbGaP/<phs>/<version>/organized` for easier loading into the database.
 
-The organize_dbgap.py script aims to do all of this with one line.
+The `organize_dbgap.py` script aims to do all of this with one line.
 
 # One-time setup steps:
 
 ## Make yourself a working directory:
+
+```
 mkdir /projects/topmed/dbgap_workspaces/\<username\>
+```
 
 ## Run vdb-config. You will feel like you've been transported back to 1990 and are using MS-DOS.
 
+```
 /projects/resources/software/apps/sratoolkit/vdb-config -i
-
+```
 
 1. import repository key (press 4). It is located here:
-/projects/topmed/dbgap_workspaces/prj_9334.ngc
+`/projects/topmed/dbgap_workspaces/prj_9334.ngc`
 You will have to navigate with the anti-gui.
 To select a directory, use the arrows and then enter to choose.
 To get to the files tab, press tab.
@@ -27,7 +31,7 @@ It took me too long to figure this out.
 2. say "yes" to "do you want to change the location?"
 Navigate to choose:
 
-/projects/topmed/dbgap_workspaces/\<username\>
+`/projects/topmed/dbgap_workspaces/\<username\>`
 
 3. Save your changes (press 6)
 
@@ -38,9 +42,10 @@ Navigate to choose:
 
 ## download set up
 
+```
 cd /projects/topmed/dbgap_workspaces/\<username\>
-
 mkdir downloads/phsXXXXXX.vXX
+```
 
 For example, framingham v27 is phs000007.v27 and Cleveland Family Study v1 is phs000284.v1 It is important that the phs and version numbers are correct, as that's how the python script knows where to put the final decrypted, uncompressed, symlinked data.
 
@@ -49,15 +54,25 @@ For example, framingham v27 is phs000007.v27 and Cleveland Family Study v1 is ph
 Instructions to do this still need to be added.
 
 ## run the python script
+
+Before you can run `organize_dbgap.py` you will need to find the name of the consent variable for this accession.
+You can either look in the Subject file in one of the downloaded consent groups or on the dbGaP website.
+
+Run the script to organize the files.
+You may need to work in a virtual environment that has the package requirements installed (`pandas`, in particular).
+The requirements are found in the `pip_requirements.txt` file in the same directory as the `organize_dbgap.py` script.
+If the consent variable is not named `CONSENT`, you will need to specify the variable name with the `--consent-variable <name>` flag when you run it.
+```
 organize_dbgap.py downloads/phsXXXXXX.vXX
+```
 
 This script can be run from any directory. It will:
 
 * decrypt dbgap files
 
-* create the final directory for the files, e.g. /projects/topmed/downloaded_data/dbGaP/phs000007/v27/
+* create the final directory for the files, e.g. `/projects/topmed/downloaded_data/dbGaP/phs000007/v27/`
 
-* copy dbgap files to, e.g. /projects/topmed/downloaded_data/dbGaP/phs000007/v27/raw
+* copy dbgap files to the "raw" subdirectory, e.g. `/projects/topmed/downloaded_data/dbGaP/phs000007/v27/raw`
 
 * uncompress raw files
 
@@ -65,7 +80,10 @@ This script can be run from any directory. It will:
 
 * match up each phenotype or special file with its corresponding var_report and data_dict file
 
-* organize raw files using symlinks in the "organized" subdirectory, e.g., /projects/topmed/downloaded_data/dbGaP/phs000007/v27/organized
+* check that all expected consent groups have been downloaded
+
+* organize raw files using symlinks in the "organized" subdirectory, e.g., `/projects/topmed/downloaded_data/dbGaP/phs000007/v27/organized`
 
 * print out any files that were not sortable because they didn't match the expected filename conventions. These should be inspected to make sure nothing was missed.
 
+If the script crashes for any reason, you will need to remove the directory it created (e.g., `/projects/topmed/downloaded_data/dbGaP/<phs>/<version>/`) before trying again.

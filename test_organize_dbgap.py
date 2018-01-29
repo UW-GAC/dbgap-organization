@@ -5,6 +5,7 @@ import re
 import tempfile
 import shutil
 import subprocess
+import glob
 
 from faker import Factory
 
@@ -27,7 +28,6 @@ def _touch(filename, text=""):
     """
     with open(filename, 'w') as f:
         f.write(text)
-
 
 def _get_test_dbgap_filename(file_type, **kwargs):
     """Construct and return a test dbgap file name with the correct pattern for a given file_type
@@ -152,7 +152,7 @@ class TestDbgapFile(TempdirTestCase):
         dbgap_file = DbgapFile(filename)
         self.assertEqual(dbgap_file.file_type, 'phenotype')
         self.assertEqual(dbgap_file.match.groupdict()['dbgap_id'], 'phs000284.v1.pht001903.v1')
-        
+
     def test_get_file_type_data_dict(self):
         """DbgapFile._set_file_type works correctly for data_dict files"""
         filename = os.path.join(self.tempdir, 'phs000284.v1.pht001903.v1.CFS_CARe_ECG.data_dict_2011_02_07.xml')
@@ -160,7 +160,7 @@ class TestDbgapFile(TempdirTestCase):
         dbgap_file = DbgapFile(filename)
         self.assertEqual(dbgap_file.file_type, 'data_dict')
         self.assertEqual(dbgap_file.match.groupdict()['dbgap_id'], 'phs000284.v1.pht001903.v1')
-    
+
     def test_get_file_type_var_report(self):
         """DbgapFile._set_file_type works correctly for var_report files"""
         filename = os.path.join(self.tempdir, 'phs000284.v1.pht001903.v1.p1.CFS_CARe_ECG.var_report_2011_02_07.xml')
@@ -168,7 +168,7 @@ class TestDbgapFile(TempdirTestCase):
         dbgap_file = DbgapFile(filename)
         self.assertEqual(dbgap_file.file_type, 'var_report')
         self.assertEqual(dbgap_file.match.groupdict()['dbgap_id'], 'phs000284.v1.pht001903.v1')
-    
+
     def test_get_file_type_other(self):
         """DbgapFile._set_file_type works correctly for files that don't match a regex"""
         filename = os.path.join(self.tempdir, 'phs000284.v1.pht001903.v1.p1.CFS_CARe_ECG.var_report_2011_02_07.xml.gz')
@@ -455,8 +455,19 @@ class DbgapDirectoryStructureTestCase(TempdirTestCase):
                   'consent_code': self.consent_code1
                   }
 
+        lines = ''
         if file_type == 'subject':
             kwargs['base'] = 'Subject'
+            # Also set up the subject data for testing check_consent_groups. :(
+            lines = '\n'.join([
+                '# a comment',
+                'SUBJECT_ID\tCONSENT',
+                'a\t1',
+                'b\t2',
+                'c\t1',
+                'd\t2',
+                ''
+                ])
         if file_type == 'sample':
             kwargs['base'] = 'Sample'
         if file_type == 'pedigree':
@@ -465,7 +476,7 @@ class DbgapDirectoryStructureTestCase(TempdirTestCase):
         # consent group 1
         # data
         filename = os.path.join(self.dir1, _get_test_dbgap_filename(file_type, **kwargs))
-        _touch(filename)
+        _touch(filename, text=lines)
         self.data_file1 = DbgapFile(filename)
 
         # var reports
@@ -484,7 +495,7 @@ class DbgapDirectoryStructureTestCase(TempdirTestCase):
 
         # data
         filename = os.path.join(self.dir2, _get_test_dbgap_filename(file_type, **kwargs))
-        _touch(filename)
+        _touch(filename, text=lines)
         self.data_file2 = DbgapFile(filename)
 
         # var reports
@@ -521,7 +532,7 @@ class DbgapDirectoryStructureTestCase(TempdirTestCase):
 
 
 class GetSpecialFileSetTestCase(DbgapDirectoryStructureTestCase):
-    
+
     def test_working_with_subject_pattern(self):
         """test that _get_special_file_set works for subject files"""
         self._make_file_set('phenotype')
@@ -634,7 +645,7 @@ class GetPhenotypeFileSetsTestCase(DbgapDirectoryStructureTestCase):
         pheno_file1 = self.data_file1
         self._make_file_set('phenotype')
         pheno_file2 = self.data_file1
-        
+
         dbgap_files = organize_dbgap.get_file_list(self.tempdir)
         file_sets = organize_dbgap._get_phenotype_file_sets(dbgap_files)
         self.assertIsInstance(file_sets, list)
@@ -652,6 +663,17 @@ class GetPhenotypeFileSetsTestCase(DbgapDirectoryStructureTestCase):
         with self.assertRaises(ValueError):
             organize_dbgap._get_phenotype_file_sets(dbgap_files)
 
+    def test_exception_raised_if_duplicate_phenotype_filenames_in_different_directories(self):
+        self._make_file_set('phenotype')
+        basename = self.data_file1.basename
+        shutil.rmtree(self.dir2)
+        shutil.copytree(self.dir1, self.dir2)
+        dbgap_files = organize_dbgap.get_file_list(self.tempdir)
+        expected_msg = 'duplicate phenotype files detected for filename {name}'.format(
+            name=basename
+        )
+        with self.assertRaisesRegex(RuntimeError, expected_msg):
+            organize_dbgap._get_phenotype_file_sets(dbgap_files)
 
 class CheckSymlinkTestCase(TempdirTestCase):
     """tests for _check_symlink"""
@@ -892,6 +914,166 @@ class CreateFinalDirectoryTestCase(TempdirTestCase):
         with self.assertRaisesRegex(FileNotFoundError, r"{outdir}'$".format(outdir=nonexistent_directory)):
             organize_dbgap.create_final_directory(self.phs, self.version, nonexistent_directory)
 
+class CheckConsentGroupsTestCase(DbgapDirectoryStructureTestCase):
+
+    """Tests for _check_consent_group function"""
+    def test_working(self):
+        dbgap_files = organize_dbgap.get_file_list(self.tempdir)
+        subject_set = organize_dbgap._get_special_file_set(dbgap_files, pattern='Subject')
+        phenotype_sets = organize_dbgap._get_phenotype_file_sets(dbgap_files)
+        self.assertIsNone(organize_dbgap._check_consent_groups(subject_set,
+            phenotype_sets))
+
+    def test_works_with_different_consent_variable_name(self):
+        dbgap_files = organize_dbgap.get_file_list(self.tempdir)
+        subject_set = organize_dbgap._get_special_file_set(dbgap_files, pattern='Subject')
+        phenotype_sets = organize_dbgap._get_phenotype_file_sets(dbgap_files)
+        # Change the consent column in the subject files.
+        other_consent_variable = 'cons'
+        for subj_file in subject_set['data_files']:
+            filename = subj_file.full_path
+            with open(filename, 'r') as f:
+                text = f.read()
+            new_text = text.replace('CONSENT', other_consent_variable)
+            _touch(filename, text=new_text)
+
+        self.assertIsNone(organize_dbgap._check_consent_groups(subject_set,
+            phenotype_sets, consent_variable=other_consent_variable))
+
+    def test_fails_with_incorrect_consent_variable_name(self):
+        dbgap_files = organize_dbgap.get_file_list(self.tempdir)
+        subject_set = organize_dbgap._get_special_file_set(dbgap_files, pattern='Subject')
+        phenotype_sets = organize_dbgap._get_phenotype_file_sets(dbgap_files)
+        # Change the consent column in the subject files.
+        other_consent_variable = 'cons'
+        for subj_file in subject_set['data_files']:
+            filename = subj_file.full_path
+            with open(filename, 'r') as f:
+                text = f.read()
+            new_text = text.replace('CONSENT', other_consent_variable)
+            _touch(filename, text=new_text)
+
+        with self.assertRaisesRegex(KeyError, 'Expected consent variable CONSENT'):
+            organize_dbgap._check_consent_groups(subject_set, phenotype_sets)
+
+    def test_fails_with_too_few_phenotype_files(self):
+        # Remove one of the directories and try again.
+        shutil.rmtree(self.dir2)
+        dbgap_files = organize_dbgap.get_file_list(self.tempdir)
+        subject_set = organize_dbgap._get_special_file_set(dbgap_files, pattern='Subject')
+        phenotype_sets = organize_dbgap._get_phenotype_file_sets(dbgap_files)
+
+        expected_error = 'Number of phenotype files does not match'
+        with self.assertRaisesRegex(RuntimeError, expected_error):
+            organize_dbgap._check_consent_groups(subject_set, phenotype_sets)
+
+    def test_fails_with_too_many_phenotype_files(self):
+        # Create a third directory with phenotype files.
+        dir3 = os.path.join(self.tempdir, 'dir3')
+        shutil.copytree(self.dir2, dir3)
+        code2 = self.consent_code2.upper()
+        code3 = fake.word().upper()
+        # Rename files so they don't trip the duplicated file check in
+        # _get_phenotype_file_sets
+        for x in glob.iglob(os.path.join(dir3, "*." + code2 + ".*")):
+            new_name = x.replace('.c2.', '.c3.').replace(code2, code3)
+            os.rename(x, new_name)
+
+        dbgap_files = organize_dbgap.get_file_list(self.tempdir)
+        subject_set = organize_dbgap._get_special_file_set(dbgap_files, pattern='Subject')
+        phenotype_sets = organize_dbgap._get_phenotype_file_sets(dbgap_files)
+
+        expected_error = 'Number of phenotype files does not match'
+        with self.assertRaisesRegex(RuntimeError, expected_error):
+            organize_dbgap._check_consent_groups(subject_set, phenotype_sets)
+
+    def test_fails_if_phenotype_file_consent_codes_dont_match_values_in_subject_file(self):
+        # Rename one set of files to have the wrong consent code.
+        # _get_phenotype_file_sets
+        for x in glob.iglob(os.path.join(self.dir2, "*.c2.*")):
+            new_name = x.replace('.c2.', '.c3.')
+            os.rename(x, new_name)
+
+        dbgap_files = organize_dbgap.get_file_list(self.tempdir)
+        subject_set = organize_dbgap._get_special_file_set(dbgap_files, pattern='Subject')
+        phenotype_sets = organize_dbgap._get_phenotype_file_sets(dbgap_files)
+
+        expected_error = 'Missing files for consent groups c2'
+        with self.assertRaisesRegex(RuntimeError, expected_error):
+            organize_dbgap._check_consent_groups(subject_set, phenotype_sets)
+
+    def test_works_if_phenotype_files_in_different_order_than_consent_codes(self):
+        # Rename the download directories so they are in the opposite order of
+        # the consent codes.
+        os.rename(self.dir1, os.path.join(self.tempdir, 'zzz'))
+        os.rename(self.dir2, os.path.join(self.tempdir, 'aaa'))
+        dbgap_files = organize_dbgap.get_file_list(self.tempdir)
+        subject_set = organize_dbgap._get_special_file_set(dbgap_files, pattern='Subject')
+        phenotype_sets = organize_dbgap._get_phenotype_file_sets(dbgap_files)
+
+        self.assertIsNone(
+            organize_dbgap._check_consent_groups(subject_set, phenotype_sets)
+            )
+
+    def test_works_if_subject_file_data_rows_have_trailing_tabs(self):
+        # Create a subject file that has trailing tabs.
+        # May need the additional STATUS variable to make it work "properly".
+        lines = '\n'.join([
+            '# a comment',
+            'SUBJECT_ID\tCONSENT\tSTATUS',
+            '1\t1\t1\t',
+            '2\t2\t1\t',
+            '3\t1\t1\t',
+            '4\t2\t1\t',
+            '5\t0\t1\t',
+            ''
+            ])
+        for x in glob.iglob(os.path.join(self.dir2, "*.Subject.MULTI.txt")):
+            _touch(x, text=lines)
+        for x in glob.iglob(os.path.join(self.dir1, "*.Subject.MULTI.txt")):
+            _touch(x, text=lines)
+
+        dbgap_files = organize_dbgap.get_file_list(self.tempdir)
+        subject_set = organize_dbgap._get_special_file_set(dbgap_files, pattern='Subject')
+        phenotype_sets = organize_dbgap._get_phenotype_file_sets(dbgap_files)
+
+        self.assertIsNone(
+            organize_dbgap._check_consent_groups(subject_set, phenotype_sets)
+            )
+
+    def test_works_if_subject_file_has_a_zero_value_consent(self):
+        # Create a subject file that has trailing tabs.
+        lines = '\n'.join([
+            '# a comment',
+            'SUBJECT_ID\tCONSENT',
+            '1\t1',
+            '2\t2',
+            '3\t1',
+            '4\t2',
+            '5\t0',
+            ''
+            ])
+        for x in glob.iglob(os.path.join(self.dir2, "*.Subject.MULTI.txt")):
+            _touch(x, text=lines)
+        for x in glob.iglob(os.path.join(self.dir1, "*.Subject.MULTI.txt")):
+            _touch(x, text=lines)
+
+        dbgap_files = organize_dbgap.get_file_list(self.tempdir)
+        subject_set = organize_dbgap._get_special_file_set(dbgap_files, pattern='Subject')
+        phenotype_sets = organize_dbgap._get_phenotype_file_sets(dbgap_files)
+
+        self.assertIsNone(
+            organize_dbgap._check_consent_groups(subject_set, phenotype_sets)
+            )
+
+    def setUp(self):
+        # Call superclass constructor.
+        super(CheckConsentGroupsTestCase, self).setUp()
+        # Both subject files and phenotype files are required for consent group checking.
+        self._make_file_set('subject')
+        self._make_file_set('phenotype')
+
+
 class CopyFilesTestCase(TempdirTestCase):
     """Tests of copy_files function"""
 
@@ -1022,7 +1204,7 @@ class ParseInputDirectoryReleasedTestCase(unittest.TestCase):
 class ParseInputDirectoryPrereleaseTestCase(unittest.TestCase):
     """Tests for parse_input_directory with pre-accessioned data Note that it is impossible
     to test all non-matches for the regex so only a few specific cases are tested."""
-    
+
     def test_working(self):
         date = '20160208'
         input_directory = ''.join(['ProcessedPheno', date])
@@ -1057,6 +1239,6 @@ class ParseInputDirectoryPrereleaseTestCase(unittest.TestCase):
         input_directory = ''.join([prefix, date])
         with self.assertRaises(ValueError):
             organize_dbgap.parse_input_directory(input_directory, prerelease=True)
-    
+
 if __name__ == '__main__':
     unittest.main()
