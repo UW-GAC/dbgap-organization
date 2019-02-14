@@ -2,28 +2,29 @@
 
 import os
 import sys
-import shutil # file system utilities
-import re # regular expressions
+import shutil  # file system utilities
+import re  # regular expressions
 from argparse import ArgumentParser
-import subprocess # for system commands - in this case, only diff
-from pprint import pprint
+import subprocess  # for system commands - in this case, only diff
 import errno
 from stat import S_IRUSR, S_IXUSR, S_IRGRP, S_IXGRP
 from datetime import datetime
 import pandas as pd
 
-__version__ = 1.3
+__version__ = 1.4
 
 # regular expression matchers for various kinds of dbgap files
-dbgap_re_dict = {'data_dict': r'^(?P<dbgap_id>phs\d{6}\.v\d+?\.pht\d{6}\.v\d+?)\.(?P<base>.+?)\.data_dict(?P<extra>\w{0,}?)\.xml$',
-           'phenotype': r'^(?P<dbgap_id>phs\d{6}\.v\d+?\.pht\d{6}\.v\d+?)\.p(\d+?)\.c(\d+?)\.(?P<base>.+?)\.(?P<consent_code>.+?)\.txt$',
-           'var_report': r'^(?P<dbgap_id>phs\d{6}\.v\d+?\.pht\d{6}\.v\d+?)\.p(\d+?)\.(?P<base>.+?)\.var_report(\w{0,}?)\.xml$',
-           'special': r'^(?P<dbgap_id>phs\d{6}\.v\d+?\.pht\d{6}\.v\d+?)\.p(\d+?)\.(.+?)\.MULTI.txt$'
-           }
+dbgap_re_dict = {
+    'data_dict': r'^(?P<dbgap_id>phs\d{6}\.v\d+?\.pht\d{6}\.v\d+?)\.(?P<base>.+?)\.data_dict(?P<extra>\w{0,}?)\.xml$',
+    'phenotype': r'^(?P<dbgap_id>phs\d{6}\.v\d+?\.pht\d{6}\.v\d+?)\.p(\d+?)\.c(\d+?)\.(?P<base>.+?)\.(?P<consent_code>.+?)\.txt$',  # noqa
+    'var_report': r'^(?P<dbgap_id>phs\d{6}\.v\d+?\.pht\d{6}\.v\d+?)\.p(\d+?)\.(?P<base>.+?)\.var_report(\w{0,}?)\.xml$',  # noqa
+    'special': r'^(?P<dbgap_id>phs\d{6}\.v\d+?\.pht\d{6}\.v\d+?)\.p(\d+?)\.(.+?)\.MULTI.txt$'
+}
 
-# some notes:
-# the var_reports and data dictionaries pertain to a single participant set number; they are the same across consent groups
-# we only need to link 1 var_report and 1 data_dict for each phenotype dataset.
+# Some notes:
+# The var_reports and data dictionaries pertain to a single participant set number; they are the same across consent
+# groups. We only need to link 1 var_report and 1 data_dict for each phenotype dataset.
+
 
 class DbgapFile(object):
     """Class to hold information about files downloaded from dbgap.
@@ -43,16 +44,15 @@ class DbgapFile(object):
         self.basename = os.path.basename(file_path)
 
         # these will be set in the set_file_type class method
-        self.file_type = None # will store the file type
-        self.match = None # will store the regular expression re.match object
+        self.file_type = None  # will store the file type
+        self.match = None  # will store the regular expression re.match object
 
         # auto-set the file type
-        self._set_file_type() # possibilities are 'phenotype', 'var_report', 'data_dict'
+        self._set_file_type()  # possibilities are 'phenotype', 'var_report', 'data_dict'
 
     def __str__(self):
         """string method for DbgapFile objects"""
         return self.full_path
-
 
     def _set_file_type(self, re_dict=dbgap_re_dict):
         """Function to set the file_type of a DbgapFile object, based on regular expression patterns"""
@@ -92,7 +92,8 @@ def _check_diffs(dbgap_file_subset):
         try:
             out = subprocess.check_output(cmd, shell=True)
         except subprocess.CalledProcessError:
-            raise ValueError('files are expect to be the same but are different: {file_a}, {file_b}'.format(file_a=filename_a, file_b=filename_b))
+            raise ValueError('files are expect to be the same but are different: {file_a}, {file_b}'.format(
+                file_a=filename_a, file_b=filename_b))
 
 
 def _get_file_match(dbgap_files, dbgap_file_to_match, match_type, check_diffs=True, must_exist=True):
@@ -133,7 +134,6 @@ def _get_file_match(dbgap_files, dbgap_file_to_match, match_type, check_diffs=Tr
 
     # return the first
     return matches[0]
-
 
 
 def _get_special_file_set(dbgap_files, pattern='Subject'):
@@ -217,7 +217,8 @@ def _get_phenotype_file_sets(dbgap_files):
     for x in phenotype_file_sets:
         basenames = [y.basename for y in x['data_files']]
         if n_phenotype_files != len(x['data_files']):
-            msg = 'phenotype file set should have {n} data files but only has: {filenames}'.format(filenames=', '.join(basenames), n=n_phenotype_files)
+            msg = 'phenotype file set should have {n} data files but only has: {filenames}'.format(
+                filenames=', '.join(basenames), n=n_phenotype_files)
             raise ValueError(msg)
         for y in basenames:
             if basenames.count(y) > 1:
@@ -227,6 +228,7 @@ def _get_phenotype_file_sets(dbgap_files):
                 raise RuntimeError(msg)
 
     return phenotype_file_sets
+
 
 def _check_symlink(symlink_path):
     """Test if symlink is broken
@@ -279,12 +281,12 @@ def _make_symlink_set(file_set):
     if file_set['var_report'] is not None:
         _make_symlink(file_set['var_report'])
     else:
-        print ("missing var_report for file {file}".format(file=file_set['data_dict'].basename))
+        print("missing var_report for file {file}".format(file=file_set['data_dict'].basename))
     # link the data dictionary
     _make_symlink(file_set['data_dict'])
 
 
-def _make_symlinks(organized_directory, subject_file_set, pedigree_file_set, sample_file_set, phenotype_file_sets, nfiles=None):
+def _make_symlinks(organized_directory, subject_file_set, pedigree_file_set, sample_file_set, phenotype_file_sets, nfiles=None):  # noqa
     """Function to generate symlinks for a set of dbgap files.
     """
     orig_directory = os.getcwd()
@@ -337,18 +339,33 @@ def decrypt(directory, decrypt_path='/projects/resources/software/apps/sratoolki
     subprocess.check_call('{vdb} -q .'.format(vdb=decrypt_path), shell=True)
     os.chdir(original_directory)
 
-def _check_consent_groups(subject_file_set, phenotype_file_sets,
-    consent_variable="CONSENT"):
+
+def _check_consent_groups(subject_file_set, phenotype_file_sets, consent_variable=None):
+
+    # Check for the number of header rows. They start with #.
+    n_skip = 0
+    done = False
+    with open(subject_file_set['data_files'][0].full_path) as f:
+        while not done:
+            line = f.readline()
+            if line.startswith('#') or line.rstrip() == '':
+                n_skip += 1
+            else:
+                done = True
     # Get the number of unique consent groups from the subject file.
     subj_file = subject_file_set['data_files'][0].full_path
-    subj = pd.read_csv(subj_file, comment='#', delimiter='\t', dtype=str, index_col=False)
-    try:
-        consent_values = subj[consent_variable]
-    except KeyError:
-        msg = 'Expected consent variable {var} not found in subject file.'.format(
-            var=consent_variable
-        )
-        raise KeyError(msg)
+    subj = pd.read_csv(subj_file, delimiter='\t', dtype=str, index_col=False, skiprows=n_skip)
+    # Figure out which column to use for the consent values.
+    if consent_variable is None:
+        consent_values = subj.iloc[:, 2]
+    else:
+        try:
+            consent_values = subj[consent_variable]
+        except KeyError:
+            msg = 'Expected consent variable {var} not found in subject file.'.format(
+                var=consent_variable
+            )
+            raise KeyError(msg)
 
     unique_consent_values = set(consent_values.unique())
     # Remove consent group 0
@@ -377,9 +394,7 @@ def _check_consent_groups(subject_file_set, phenotype_file_sets,
             raise RuntimeError(msg)
 
 
-
-def organize(raw_directory, organized_directory, link=False, nfiles=None,
-    consent_variable="CONSENT"):
+def organize(raw_directory, organized_directory, link=False, nfiles=None, consent_variable=None):
     """Organize dbgap files by type and make symlinks
 
     Positional arguments
@@ -405,12 +420,12 @@ def organize(raw_directory, organized_directory, link=False, nfiles=None,
     phenotype_file_sets = _get_phenotype_file_sets(dbgap_files)
 
     # Check that phenotype files exist for all consent groups.
-    _check_consent_groups(subject_file_set, phenotype_file_sets,
-        consent_variable=consent_variable)
+    _check_consent_groups(subject_file_set, phenotype_file_sets, consent_variable=consent_variable)
 
     # if requested, generate the symlinks in the 'organized' subdirectory
     if link:
-        _make_symlinks(organized_directory, subject_file_set, pedigree_file_set, sample_file_set, phenotype_file_sets, nfiles=nfiles)
+        _make_symlinks(organized_directory, subject_file_set, pedigree_file_set, sample_file_set, phenotype_file_sets,
+                       nfiles=nfiles)
 
     # link files without matches in the "Other" directory
     unsorted_files = [f for f in dbgap_files if f.file_type is None]
@@ -426,6 +441,7 @@ def organize(raw_directory, organized_directory, link=False, nfiles=None,
                 _make_symlink(unsorted_file)
 
         os.chdir("..")
+
 
 def parse_input_directory(directory, prerelease=False):
     """Parse dbgap study accession and version out of input directory string
@@ -451,7 +467,8 @@ def parse_input_directory(directory, prerelease=False):
             date = datetime.strptime(groups['date'], '%Y%m%d')
             return(groups)
         else:
-            raise ValueError('{basename} does not match expected string ProcessedPheno<date>'.format(basename=basename))
+            raise ValueError('{basename} does not match expected string ProcessedPheno<date>'.format(
+                basename=basename))
     else:
         regex = re.compile(r'(?P<phs>phs\d{6})\.(?P<v>v\d+)$')
         match = regex.match(basename)
@@ -497,6 +514,7 @@ def copy_files(from_path, to_path):
 
     shutil.copytree(from_path, to_path)
 
+
 def uncompress(directory):
     """Uncompress a directory by walking the directory tree. Currently not guaranteed
     to be recursive, i.e. does not uncompress a file that was previously in a tar archive.
@@ -522,6 +540,7 @@ def uncompress(directory):
     if rerun:
         # recursion!
         uncompress(directory)
+
 
 def clean_up(directory):
     # set permissions to read- and execute-only by user and group (0550)
@@ -556,8 +575,8 @@ if __name__ == '__main__':
     parser.add_argument("--outpath", "-o", default="/projects/topmed/downloaded_data/dbGaP/", type=str)
     parser.add_argument("--prerelease", "-p", default=False, action='store_true')
     parser.add_argument('--phs', default=None, type=int)
-    parser.add_argument('--consent-variable', type=str, default='CONSENT',
-        help='name of consent variable in Subject file')
+    parser.add_argument('--consent-variable', type=str, default=None,
+                        help='name of consent variable in Subject file, otherwise assumed to be the third column')
     args = parser.parse_args()
 
     # check arguments
@@ -566,7 +585,6 @@ if __name__ == '__main__':
 
     if not args.prerelease and (args.phs):
         parser.error('phs can only be passed if --prerelease is passed')
-
 
     directory = os.path.abspath(args.directory)
     phs_dict = parse_input_directory(directory, prerelease=args.prerelease)
@@ -580,8 +598,6 @@ if __name__ == '__main__':
         outpath = os.path.join(outpath, "released")
         phs = phs_dict['phs']
         subdirectory = phs_dict['v']
-
-    #sys.exit(0)
 
     output_directory = create_final_directory(phs, subdirectory, outpath)
 
