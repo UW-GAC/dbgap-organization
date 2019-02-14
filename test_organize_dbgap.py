@@ -474,11 +474,11 @@ class DbgapDirectoryStructureTestCase(TempdirTestCase):
             # Also set up the subject data for testing check_consent_groups. :(
             lines = '\n'.join([
                 '# a comment',
-                'SUBJECT_ID\tCONSENT',
-                'a\t1',
-                'b\t2',
-                'c\t1',
-                'd\t2',
+                'dbGaP_Subject_ID\tSUBJECT_ID\tCONSENT',
+                '1001\ta\t1',
+                '1002\tb\t2',
+                '1003\tc\t1',
+                '1004\td\t2',
                 '',
             ])
         if file_type == 'sample':
@@ -954,7 +954,7 @@ class CheckConsentGroupsTestCase(DbgapDirectoryStructureTestCase):
             _touch(filename, text=new_text)
 
         self.assertIsNone(organize_dbgap._check_consent_groups(
-            subject_set, phenotype_sets, consent_variable=other_consent_variable))
+            subject_set, phenotype_sets))
 
     def test_fails_with_incorrect_consent_variable_name(self):
         dbgap_files = organize_dbgap.get_file_list(self.tempdir)
@@ -970,7 +970,7 @@ class CheckConsentGroupsTestCase(DbgapDirectoryStructureTestCase):
             _touch(filename, text=new_text)
 
         with self.assertRaisesRegex(KeyError, 'Expected consent variable CONSENT'):
-            organize_dbgap._check_consent_groups(subject_set, phenotype_sets)
+            organize_dbgap._check_consent_groups(subject_set, phenotype_sets, consent_variable="CONSENT")
 
     def test_fails_with_too_few_phenotype_files(self):
         # Remove one of the directories and try again.
@@ -1034,12 +1034,12 @@ class CheckConsentGroupsTestCase(DbgapDirectoryStructureTestCase):
         # May need the additional STATUS variable to make it work "properly".
         lines = '\n'.join([
             '# a comment',
-            'SUBJECT_ID\tCONSENT\tSTATUS',
-            '1\t1\t1\t',
-            '2\t2\t1\t',
-            '3\t1\t1\t',
-            '4\t2\t1\t',
-            '5\t0\t1\t',
+            'dbGaP_Subject_ID\tSUBJECT_ID\tCONSENT\tSTATUS',
+            '1001\t1\t1\t1\t',
+            '1002\t2\t2\t1\t',
+            '1003\t3\t1\t1\t',
+            '1004\t4\t2\t1\t',
+            '1005\t5\t0\t1\t',
             ''
         ])
         for x in glob.iglob(os.path.join(self.dir2, "*.Subject.MULTI.txt")):
@@ -1057,12 +1057,12 @@ class CheckConsentGroupsTestCase(DbgapDirectoryStructureTestCase):
         # Create a subject file that has trailing tabs.
         lines = '\n'.join([
             '# a comment',
-            'SUBJECT_ID\tCONSENT',
-            '1\t1',
-            '2\t2',
-            '3\t1',
-            '4\t2',
-            '5\t0',
+            'dbGaP_Subject_ID\tSUBJECT_ID\tCONSENT',
+            '1001\t1\t1',
+            '1002\t2\t2',
+            '1003\t3\t1',
+            '1004\t4\t2',
+            '1005\t5\t0',
             ''
         ])
         for x in glob.iglob(os.path.join(self.dir2, "*.Subject.MULTI.txt")):
@@ -1079,12 +1079,12 @@ class CheckConsentGroupsTestCase(DbgapDirectoryStructureTestCase):
     def test_works_if_subject_file_has_hash_symbol(self):
         lines = '\n'.join([
             '# a comment',
-            'SUBJECT_ID\tCONSENT',
-            '1\t1',
-            '2\t1',
-            '3\t1',
-            '4#1\t1',
-            '5\t2',
+            'dbGaP_Subject_ID\tSUBJECT_ID\tCONSENT',
+            '1001\t1\t1',
+            '1002\t2\t1',
+            '1003\t3\t1',
+            '1004\t4#1\t1',
+            '1005\t5\t2',
             ''
         ])
         for x in glob.iglob(os.path.join(self.dir2, "*.Subject.MULTI.txt")):
@@ -1100,12 +1100,12 @@ class CheckConsentGroupsTestCase(DbgapDirectoryStructureTestCase):
         lines = '\n'.join([
             '# comment 1',
             '# comment 2',
-            'SUBJECT_ID\tCONSENT',
-            '1\t1',
-            '2\t1',
-            '3\t1',
-            '4\t1',
-            '5\t2',
+            'dbGaP_Subject_ID\tSUBJECT_ID\tCONSENT',
+            '1001\t1\t1',
+            '1002\t2\t1',
+            '1003\t3\t1',
+            '1004\t4\t1',
+            '1005\t5\t2',
             ''
         ])
         for x in glob.iglob(os.path.join(self.dir2, "*.Subject.MULTI.txt")):
@@ -1122,12 +1122,12 @@ class CheckConsentGroupsTestCase(DbgapDirectoryStructureTestCase):
             '# comment 1',
             '',
             '# comment 2',
-            'SUBJECT_ID\tCONSENT',
-            '1\t1',
-            '2\t1',
-            '3\t1',
-            '4\t1',
-            '5\t2',
+            'dbGaP_Subject_ID\tSUBJECT_ID\tCONSENT',
+            '1001\t1\t1',
+            '1002\t2\t1',
+            '1003\t3\t1',
+            '1004\t4\t1',
+            '1005\t5\t2',
             ''
         ])
         for x in glob.iglob(os.path.join(self.dir2, "*.Subject.MULTI.txt")):
@@ -1142,12 +1142,12 @@ class CheckConsentGroupsTestCase(DbgapDirectoryStructureTestCase):
     def test_does_not_skip_first_subject(self):
         lines = '\n'.join([
             '# comment',
-            'SUBJECT_ID\tCONSENT',
-            '1\t2',
-            '2\t1',
-            '3\t1',
-            '4\t1',
-            '5\t1',
+            'dbGaP_Subject_ID\tSUBJECT_ID\tCONSENT',
+            '1001\t1\t2',
+            '1002\t2\t1',
+            '1003\t3\t1',
+            '1004\t4\t1',
+            '1005\t5\t1',
             ''
         ])
         for x in glob.iglob(os.path.join(self.dir2, "*.Subject.MULTI.txt")):
@@ -1158,6 +1158,24 @@ class CheckConsentGroupsTestCase(DbgapDirectoryStructureTestCase):
         subject_set = organize_dbgap._get_special_file_set(dbgap_files, pattern='Subject')
         phenotype_sets = organize_dbgap._get_phenotype_file_sets(dbgap_files)
         self.assertIsNone(organize_dbgap._check_consent_groups(subject_set, phenotype_sets))
+
+    def test_works_if_consent_variable_in_different_place(self):
+        lines = '\n'.join([
+            '# comment',
+            'dbGaP_Subject_ID\tSUBJECT_ID\tfoo\tCONSENT',
+            '1001\t1\ta\t2',
+            '1002\t2\tb\t1',
+            '1003\t3\tc\t1',
+            '1004\t4\td\t1',
+            '1005\t5\te\t1',
+            ''
+        ])
+        dbgap_files = organize_dbgap.get_file_list(self.tempdir)
+        subject_set = organize_dbgap._get_special_file_set(dbgap_files, pattern='Subject')
+        phenotype_sets = organize_dbgap._get_phenotype_file_sets(dbgap_files)
+        # Change the consent column in the subject files.
+        self.assertIsNone(organize_dbgap._check_consent_groups(
+            subject_set, phenotype_sets, consent_variable="CONSENT"))
 
     def setUp(self):
         # Call superclass constructor.
