@@ -341,9 +341,19 @@ def decrypt(directory, decrypt_path='/projects/resources/software/apps/sratoolki
 
 
 def _check_consent_groups(subject_file_set, phenotype_file_sets, consent_variable="CONSENT"):
+    # Check for the number of header rows. They start with #.
+    n_skip = 0
+    done = False
+    with open(subject_file_set['data_files'][0].full_path) as f:
+        while not done:
+            line = f.readline()
+            if line.startswith('#') or line.rstrip() == '':
+                n_skip += 1
+            else:
+                done = True
     # Get the number of unique consent groups from the subject file.
     subj_file = subject_file_set['data_files'][0].full_path
-    subj = pd.read_csv(subj_file, comment='#', delimiter='\t', dtype=str, index_col=False)
+    subj = pd.read_csv(subj_file, delimiter='\t', dtype=str, index_col=False, skiprows=n_skip)
     try:
         consent_values = subj[consent_variable]
     except KeyError:
