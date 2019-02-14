@@ -1,7 +1,6 @@
 #! /usr/bin/env python3.4
 import unittest
 import os
-import re
 import tempfile
 import shutil
 import subprocess
@@ -13,9 +12,10 @@ import organize_dbgap
 # classes
 from organize_dbgap import DbgapFile
 # constants
-from organize_dbgap import dbgap_re_dict
+
 
 fake = Factory.create()
+
 
 def _touch(filename, text=""):
     """Creates a file of a given filename.
@@ -28,6 +28,7 @@ def _touch(filename, text=""):
     """
     with open(filename, 'w') as f:
         f.write(text)
+
 
 def _get_test_dbgap_filename(file_type, **kwargs):
     """Construct and return a test dbgap file name with the correct pattern for a given file_type
@@ -81,6 +82,7 @@ def _get_test_dbgap_filename(file_type, **kwargs):
     else:
         raise ValueError('file_type does not match allowed types')
     return beginning + end
+
 
 class GetTestDbgapFilenameTestCase(unittest.TestCase):
     """Tests for the helper function _get_test_dbgap_filename"""
@@ -194,10 +196,12 @@ class TestDbgapFile(TempdirTestCase):
         filename = os.path.join(self.tempdir, 'phenotype.txt')
         _touch(filename)
         dbgap_file = DbgapFile(filename)
-        re_dict = {'phenotype': '^phenotype.txt$',
-                   'data_dict': '^data_dict.txt$',
-                   'var_report': '^var_report.txt$',
-                   'special': '^special.txt$',}
+        re_dict = {
+            'phenotype': '^phenotype.txt$',
+            'data_dict': '^data_dict.txt$',
+            'var_report': '^var_report.txt$',
+            'special': '^special.txt$',
+        }
         dbgap_file._set_file_type(re_dict=re_dict)
         self.assertEqual(dbgap_file.file_type, 'phenotype')
 
@@ -206,23 +210,26 @@ class TestDbgapFile(TempdirTestCase):
         filename = os.path.join(self.tempdir, 'data_dict.txt')
         _touch(filename)
         dbgap_file = DbgapFile(filename)
-        re_dict = {'phenotype': '^phenotype.txt$',
-                   'data_dict': '^data_dict.txt$',
-                   'var_report': '^var_report.txt$',
-                   'special': '^special.txt$',}
+        re_dict = {
+            'phenotype': '^phenotype.txt$',
+            'data_dict': '^data_dict.txt$',
+            'var_report': '^var_report.txt$',
+            'special': '^special.txt$',
+        }
         dbgap_file._set_file_type(re_dict=re_dict)
         self.assertEqual(dbgap_file.file_type, 'data_dict')
-
 
     def test_with_different_regex_var_report(self):
         """test that DbgapFile._set_file_type works with a different regex pattern dictionary for var_report files"""
         filename = os.path.join(self.tempdir, 'var_report.txt')
         _touch(filename)
         dbgap_file = DbgapFile(filename)
-        re_dict = {'phenotype': '^phenotype.txt$',
-                   'data_dict': '^data_dict.txt$',
-                   'var_report': '^var_report.txt$',
-                   'special': '^special.txt$',}
+        re_dict = {
+            'phenotype': '^phenotype.txt$',
+            'data_dict': '^data_dict.txt$',
+            'var_report': '^var_report.txt$',
+            'special': '^special.txt$',
+        }
         dbgap_file._set_file_type(re_dict=re_dict)
         self.assertEqual(dbgap_file.file_type, 'var_report')
 
@@ -231,10 +238,12 @@ class TestDbgapFile(TempdirTestCase):
         filename = os.path.join(self.tempdir, 'special.txt')
         _touch(filename)
         dbgap_file = DbgapFile(filename)
-        re_dict = {'phenotype': '^phenotype.txt$',
-                   'data_dict': '^data_dict.txt$',
-                   'var_report': '^var_report.txt$',
-                   'special': '^special.txt$',}
+        re_dict = {
+            'phenotype': '^phenotype.txt$',
+            'data_dict': '^data_dict.txt$',
+            'var_report': '^var_report.txt$',
+            'special': '^special.txt$',
+        }
         dbgap_file._set_file_type(re_dict=re_dict)
         self.assertEqual(dbgap_file.file_type, 'special')
 
@@ -253,6 +262,7 @@ class GetFileListTestCase(TempdirTestCase):
         self.assertIsInstance(res, list)
         for x in res:
             self.assertIsInstance(x, DbgapFile)
+
 
 class CheckDiffsTestCase(TempdirTestCase):
     """class to hold tests for _check_diffs function"""
@@ -288,6 +298,7 @@ class CheckDiffsTestCase(TempdirTestCase):
         with self.assertRaises(ValueError):
             organize_dbgap._check_diffs(dbgap_files)
 
+
 class GetFileMatchTestCase(TempdirTestCase):
     """Class to hold tests for _get_file_match function"""
 
@@ -306,7 +317,8 @@ class GetFileMatchTestCase(TempdirTestCase):
         other_file = DbgapFile(filename, check_exists=False)
 
         files = [xml_file, other_file, file_to_match]
-        self.assertEqual(organize_dbgap._get_file_match(files, file_to_match, 'data_dict', check_diffs=False), xml_file)
+        self.assertEqual(organize_dbgap._get_file_match(files, file_to_match, 'data_dict', check_diffs=False),
+                         xml_file)
 
     def test_no_exception_on_nonexistent_file_with_must_exist_equals_False(self):
         """does it return None with a nonexistent file and must_exist = False?"""
@@ -340,7 +352,8 @@ class GetFileMatchTestCase(TempdirTestCase):
         other_file = DbgapFile(filename, check_exists=False)
 
         files = [xml_file, other_file, file_to_match]
-        self.assertEqual(organize_dbgap._get_file_match(files, file_to_match, 'data_dict', check_diffs=False), xml_file)
+        self.assertEqual(organize_dbgap._get_file_match(files, file_to_match, 'data_dict', check_diffs=False),
+                         xml_file)
 
     def test_raise_exception_if_no_match_with_different_file_type(self):
         """does it return None if there are no matches?"""
@@ -466,8 +479,8 @@ class DbgapDirectoryStructureTestCase(TempdirTestCase):
                 'b\t2',
                 'c\t1',
                 'd\t2',
-                ''
-                ])
+                '',
+            ])
         if file_type == 'sample':
             kwargs['base'] = 'Sample'
         if file_type == 'pedigree':
@@ -592,16 +605,16 @@ class GetSpecialFileSetTestCase(DbgapDirectoryStructureTestCase):
         with self.assertRaises(Exception):
             organize_dbgap._get_special_file_set(dbgap_files, pattern='Pedigree')
 
-    #def test_exception_without_matching_var_report(self):
-    #    """test that _get_special_file_set raises an exceptoin if no var_report is found"""
-    #    self._make_file_set('phenotype')
-    #    self._make_file_set('pedigree')
-    #    # remove both of the matching data dictionaries
-    #    os.remove(self.var_report1.full_path)
-    #    os.remove(self.var_report2.full_path)
-    #    dbgap_files = organize_dbgap.get_file_list(self.tempdir)
-    #    with self.assertRaises(Exception):
-    #        organize_dbgap._get_special_file_set(dbgap_files, pattern='Pedigree')
+    # def test_exception_without_matching_var_report(self):
+    #     """test that _get_special_file_set raises an exceptoin if no var_report is found"""
+    #     self._make_file_set('phenotype')
+    #     self._make_file_set('pedigree')
+    #     # remove both of the matching data dictionaries
+    #     os.remove(self.var_report1.full_path)
+    #     os.remove(self.var_report2.full_path)
+    #     dbgap_files = organize_dbgap.get_file_list(self.tempdir)
+    #     with self.assertRaises(Exception):
+    #         organize_dbgap._get_special_file_set(dbgap_files, pattern='Pedigree')
 
     def test_exception_if_special_files_are_different(self):
         self._make_file_set('phenotype')
@@ -632,7 +645,7 @@ class GetPhenotypeFileSetsTestCase(DbgapDirectoryStructureTestCase):
         self.assertIsInstance(file_set['var_report'], DbgapFile)
         self.assertIsInstance(file_set['var_report'], DbgapFile)
         self.assertIsInstance(file_set['data_files'], list)
-        self.assertEqual(len(file_set['data_files']), 2) # 2 consent groups
+        self.assertEqual(len(file_set['data_files']), 2)  # 2 consent groups
         # checking files
         self.assertTrue(file_set['var_report'].full_path in [self.var_report1.full_path, self.var_report2.full_path])
         self.assertTrue(file_set['data_dict'].full_path in [self.dd1.full_path, self.dd2.full_path])
@@ -675,6 +688,7 @@ class GetPhenotypeFileSetsTestCase(DbgapDirectoryStructureTestCase):
         with self.assertRaisesRegex(RuntimeError, expected_msg):
             organize_dbgap._get_phenotype_file_sets(dbgap_files)
 
+
 class CheckSymlinkTestCase(TempdirTestCase):
     """tests for _check_symlink"""
 
@@ -701,6 +715,7 @@ class CheckSymlinkTestCase(TempdirTestCase):
         with self.assertRaises(FileNotFoundError):
             organize_dbgap._check_symlink(filename)
 
+
 class MakeSymlinkTestCase(TempdirTestCase):
     """Tests for _make_symlink"""
 
@@ -717,7 +732,6 @@ class MakeSymlinkTestCase(TempdirTestCase):
         self.subdir = fake.word()
         os.mkdir(os.path.join(self.tempdir, self.subdir))
 
-
     def test_working(self):
         """test that symlinks are properly created"""
         os.chdir(os.path.join(self.tempdir, self.subdir))
@@ -733,12 +747,12 @@ class MakeSymlinkTestCase(TempdirTestCase):
 
 class MakeSymlinkSetTestCase(DbgapDirectoryStructureTestCase):
     """Tests for _make_symlink_set function"""
+
     def test_working(self):
         """test that _make_symlink_set makes the symlinks for all parts of the file_set"""
         # generate a set of phenotype files
         self._make_file_set('subject')
         dbgap_files = organize_dbgap.get_file_list(self.tempdir)
-        #print(os.getcwd())
         file_set = organize_dbgap._get_special_file_set(dbgap_files)
         subdir = os.path.join(self.tempdir, fake.word())
         os.mkdir(subdir)
@@ -748,6 +762,7 @@ class MakeSymlinkSetTestCase(DbgapDirectoryStructureTestCase):
         self.assertTrue(os.path.exists(file_set['data_dict'].full_path))
         for x in file_set['data_files']:
             self.assertTrue(os.path.exists(x.full_path))
+
 
 class MakeSymlinksTestCase(DbgapDirectoryStructureTestCase):
     """Tests for _make_symlinks function"""
@@ -776,11 +791,12 @@ class MakeSymlinksTestCase(DbgapDirectoryStructureTestCase):
         self.assertTrue(os.path.exists(os.path.join(subdir, "Subject")))
         # make sure files are in the right place
         # we only need to check one of the data files, because _make_symlink_set was already tested
-        self.assertTrue(os.path.exists('Subject/'+subject_set['data_files'][0].basename))
-        self.assertTrue(os.path.exists('Subject/'+sample_set['data_files'][0].basename))
-        self.assertTrue(os.path.exists('Subject/'+pedigree_set['data_files'][0].basename))
-        self.assertTrue(os.path.exists('Phenotypes/'+pheno_set[0]['data_files'][0].basename))
-        self.assertTrue(os.path.exists('Phenotypes/'+pheno_set[1]['data_files'][0].basename))
+        self.assertTrue(os.path.exists('Subject/' + subject_set['data_files'][0].basename))
+        self.assertTrue(os.path.exists('Subject/' + sample_set['data_files'][0].basename))
+        self.assertTrue(os.path.exists('Subject/' + pedigree_set['data_files'][0].basename))
+        self.assertTrue(os.path.exists('Phenotypes/' + pheno_set[0]['data_files'][0].basename))
+        self.assertTrue(os.path.exists('Phenotypes/' + pheno_set[1]['data_files'][0].basename))
+
 
 class UncompressTestCase(TempdirTestCase):
     """Tests for uncompress function"""
@@ -865,7 +881,7 @@ class UncompressTestCase(TempdirTestCase):
         subprocess.check_call(cmd, shell=True)
         # inside a tar file
         tarfile = fake.file_name(extension='tar.gz')
-        cmd = 'tar -czf {tarfile} {file1} {file2}'.format(tarfile=tarfile, file1=file1+'.gz', file2=file2)
+        cmd = 'tar -czf {tarfile} {file1} {file2}'.format(tarfile=tarfile, file1=file1 + '.gz', file2=file2)
         subprocess.check_call(cmd, shell=True)
         # remove original file
         os.remove(file1 + ".gz")
@@ -914,15 +930,15 @@ class CreateFinalDirectoryTestCase(TempdirTestCase):
         with self.assertRaisesRegex(FileNotFoundError, r"{outdir}'$".format(outdir=nonexistent_directory)):
             organize_dbgap.create_final_directory(self.phs, self.version, nonexistent_directory)
 
-class CheckConsentGroupsTestCase(DbgapDirectoryStructureTestCase):
 
+class CheckConsentGroupsTestCase(DbgapDirectoryStructureTestCase):
     """Tests for _check_consent_group function"""
+
     def test_working(self):
         dbgap_files = organize_dbgap.get_file_list(self.tempdir)
         subject_set = organize_dbgap._get_special_file_set(dbgap_files, pattern='Subject')
         phenotype_sets = organize_dbgap._get_phenotype_file_sets(dbgap_files)
-        self.assertIsNone(organize_dbgap._check_consent_groups(subject_set,
-            phenotype_sets))
+        self.assertIsNone(organize_dbgap._check_consent_groups(subject_set, phenotype_sets))
 
     def test_works_with_different_consent_variable_name(self):
         dbgap_files = organize_dbgap.get_file_list(self.tempdir)
@@ -937,8 +953,8 @@ class CheckConsentGroupsTestCase(DbgapDirectoryStructureTestCase):
             new_text = text.replace('CONSENT', other_consent_variable)
             _touch(filename, text=new_text)
 
-        self.assertIsNone(organize_dbgap._check_consent_groups(subject_set,
-            phenotype_sets, consent_variable=other_consent_variable))
+        self.assertIsNone(organize_dbgap._check_consent_groups(
+            subject_set, phenotype_sets, consent_variable=other_consent_variable))
 
     def test_fails_with_incorrect_consent_variable_name(self):
         dbgap_files = organize_dbgap.get_file_list(self.tempdir)
@@ -1011,9 +1027,7 @@ class CheckConsentGroupsTestCase(DbgapDirectoryStructureTestCase):
         subject_set = organize_dbgap._get_special_file_set(dbgap_files, pattern='Subject')
         phenotype_sets = organize_dbgap._get_phenotype_file_sets(dbgap_files)
 
-        self.assertIsNone(
-            organize_dbgap._check_consent_groups(subject_set, phenotype_sets)
-            )
+        self.assertIsNone(organize_dbgap._check_consent_groups(subject_set, phenotype_sets))
 
     def test_works_if_subject_file_data_rows_have_trailing_tabs(self):
         # Create a subject file that has trailing tabs.
@@ -1027,7 +1041,7 @@ class CheckConsentGroupsTestCase(DbgapDirectoryStructureTestCase):
             '4\t2\t1\t',
             '5\t0\t1\t',
             ''
-            ])
+        ])
         for x in glob.iglob(os.path.join(self.dir2, "*.Subject.MULTI.txt")):
             _touch(x, text=lines)
         for x in glob.iglob(os.path.join(self.dir1, "*.Subject.MULTI.txt")):
@@ -1037,9 +1051,7 @@ class CheckConsentGroupsTestCase(DbgapDirectoryStructureTestCase):
         subject_set = organize_dbgap._get_special_file_set(dbgap_files, pattern='Subject')
         phenotype_sets = organize_dbgap._get_phenotype_file_sets(dbgap_files)
 
-        self.assertIsNone(
-            organize_dbgap._check_consent_groups(subject_set, phenotype_sets)
-            )
+        self.assertIsNone(organize_dbgap._check_consent_groups(subject_set, phenotype_sets))
 
     def test_works_if_subject_file_has_a_zero_value_consent(self):
         # Create a subject file that has trailing tabs.
@@ -1052,7 +1064,7 @@ class CheckConsentGroupsTestCase(DbgapDirectoryStructureTestCase):
             '4\t2',
             '5\t0',
             ''
-            ])
+        ])
         for x in glob.iglob(os.path.join(self.dir2, "*.Subject.MULTI.txt")):
             _touch(x, text=lines)
         for x in glob.iglob(os.path.join(self.dir1, "*.Subject.MULTI.txt")):
@@ -1062,9 +1074,7 @@ class CheckConsentGroupsTestCase(DbgapDirectoryStructureTestCase):
         subject_set = organize_dbgap._get_special_file_set(dbgap_files, pattern='Subject')
         phenotype_sets = organize_dbgap._get_phenotype_file_sets(dbgap_files)
 
-        self.assertIsNone(
-            organize_dbgap._check_consent_groups(subject_set, phenotype_sets)
-            )
+        self.assertIsNone(organize_dbgap._check_consent_groups(subject_set, phenotype_sets))
 
     def setUp(self):
         # Call superclass constructor.
@@ -1088,7 +1098,6 @@ class CopyFilesTestCase(TempdirTestCase):
         subdir2 = fake.word()
         organize_dbgap.copy_files(subdir1, subdir2)
         self.assertTrue(os.path.exists(os.path.join(subdir2, filename)))
-
 
     def test_fails_if_to_path_already_exists(self):
         """test that copy_files fails if the destination path already exists"""
@@ -1201,6 +1210,7 @@ class ParseInputDirectoryReleasedTestCase(unittest.TestCase):
         with self.assertRaises(ValueError):
             organize_dbgap.parse_input_directory(phs_string)
 
+
 class ParseInputDirectoryPrereleaseTestCase(unittest.TestCase):
     """Tests for parse_input_directory with pre-accessioned data Note that it is impossible
     to test all non-matches for the regex so only a few specific cases are tested."""
@@ -1239,6 +1249,7 @@ class ParseInputDirectoryPrereleaseTestCase(unittest.TestCase):
         input_directory = ''.join([prefix, date])
         with self.assertRaises(ValueError):
             organize_dbgap.parse_input_directory(input_directory, prerelease=True)
+
 
 if __name__ == '__main__':
     unittest.main()
