@@ -11,7 +11,7 @@ from stat import S_IRUSR, S_IXUSR, S_IRGRP, S_IXGRP
 from datetime import datetime
 import pandas as pd
 
-__version__ = 1.3
+__version__ = 1.4
 
 # regular expression matchers for various kinds of dbgap files
 dbgap_re_dict = {
