@@ -1117,6 +1117,28 @@ class CheckConsentGroupsTestCase(DbgapDirectoryStructureTestCase):
         phenotype_sets = organize_dbgap._get_phenotype_file_sets(dbgap_files)
         self.assertIsNone(organize_dbgap._check_consent_groups(subject_set, phenotype_sets))
 
+    def test_skips_blank_header_line(self):
+        lines = '\n'.join([
+            '# comment 1',
+            '',
+            '# comment 2',
+            'SUBJECT_ID\tCONSENT',
+            '1\t1',
+            '2\t1',
+            '3\t1',
+            '4\t1',
+            '5\t2',
+            ''
+        ])
+        for x in glob.iglob(os.path.join(self.dir2, "*.Subject.MULTI.txt")):
+            _touch(x, text=lines)
+        for x in glob.iglob(os.path.join(self.dir1, "*.Subject.MULTI.txt")):
+            _touch(x, text=lines)
+        dbgap_files = organize_dbgap.get_file_list(self.tempdir)
+        subject_set = organize_dbgap._get_special_file_set(dbgap_files, pattern='Subject')
+        phenotype_sets = organize_dbgap._get_phenotype_file_sets(dbgap_files)
+        self.assertIsNone(organize_dbgap._check_consent_groups(subject_set, phenotype_sets))
+
     def test_does_not_skip_first_subject(self):
         lines = '\n'.join([
             '# comment',

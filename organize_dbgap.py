@@ -347,7 +347,7 @@ def _check_consent_groups(subject_file_set, phenotype_file_sets, consent_variabl
     with open(subject_file_set['data_files'][0].full_path) as f:
         while not done:
             line = f.readline()
-            if line.startswith('#'):
+            if line.startswith('#') or line.rstrip() == '':
                 n_skip += 1
             else:
                 done = True
