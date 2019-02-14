@@ -340,7 +340,8 @@ def decrypt(directory, decrypt_path='/projects/resources/software/apps/sratoolki
     os.chdir(original_directory)
 
 
-def _check_consent_groups(subject_file_set, phenotype_file_sets, consent_variable="CONSENT"):
+def _check_consent_groups(subject_file_set, phenotype_file_sets, consent_variable=None):
+
     # Check for the number of header rows. They start with #.
     n_skip = 0
     done = False
@@ -354,13 +355,17 @@ def _check_consent_groups(subject_file_set, phenotype_file_sets, consent_variabl
     # Get the number of unique consent groups from the subject file.
     subj_file = subject_file_set['data_files'][0].full_path
     subj = pd.read_csv(subj_file, delimiter='\t', dtype=str, index_col=False, skiprows=n_skip)
-    try:
-        consent_values = subj[consent_variable]
-    except KeyError:
-        msg = 'Expected consent variable {var} not found in subject file.'.format(
-            var=consent_variable
-        )
-        raise KeyError(msg)
+    # Figure out which column to use for the consent values.
+    if consent_variable is None:
+        consent_values = subj.iloc[:, 2]
+    else:
+        try:
+            consent_values = subj[consent_variable]
+        except KeyError:
+            msg = 'Expected consent variable {var} not found in subject file.'.format(
+                var=consent_variable
+            )
+            raise KeyError(msg)
 
     unique_consent_values = set(consent_values.unique())
     # Remove consent group 0
@@ -389,7 +394,7 @@ def _check_consent_groups(subject_file_set, phenotype_file_sets, consent_variabl
             raise RuntimeError(msg)
 
 
-def organize(raw_directory, organized_directory, link=False, nfiles=None, consent_variable="CONSENT"):
+def organize(raw_directory, organized_directory, link=False, nfiles=None, consent_variable=None):
     """Organize dbgap files by type and make symlinks
 
     Positional arguments
@@ -570,8 +575,8 @@ if __name__ == '__main__':
     parser.add_argument("--outpath", "-o", default="/projects/topmed/downloaded_data/dbGaP/", type=str)
     parser.add_argument("--prerelease", "-p", default=False, action='store_true')
     parser.add_argument('--phs', default=None, type=int)
-    parser.add_argument('--consent-variable', type=str, default='CONSENT',
-                        help='name of consent variable in Subject file')
+    parser.add_argument('--consent-variable', type=str, default=None,
+                        help='name of consent variable in Subject file, otherwise assumed to be the third column')
     args = parser.parse_args()
 
     # check arguments
